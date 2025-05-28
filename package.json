@@ -2,10 +2,12 @@
   "name": "fileverse-storage",
   "version": "1.0.0",
   "description": "Storage Service for Fileverse",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon .",
-    "start": "NODE_ENV=production node src/index.js",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "start": "NODE_ENV=production node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -32,9 +34,20 @@
     "request": "^2.88.2",
     "ucans": "^0.10.0",
     "uuid": "^9.0.1",
+    "viem": "^2.30.1",
     "web3.storage": "^4.4.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.19"
+    "@types/bunyan": "^1.8.11",
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/express-fileupload": "^1.5.1",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.15.21",
+    "@types/request": "^2.48.12",
+    "@types/uuid": "^10.0.0",
+    "nodemon": "^2.0.22",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.4"
   }
 }
