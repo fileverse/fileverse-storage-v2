@@ -17,7 +17,6 @@ async function validateContractAddress(
 
   try {
     invokerDid = await getCollaboratorKeys(invokerAddress, contractAddress);
-    console.log("invokerDid", invokerDid);
   } catch (error) {
     console.error("Error retrieving invoker DID:", error);
     return false;
