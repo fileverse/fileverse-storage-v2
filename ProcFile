@@ -1,2 +1,2 @@
-api: npm run start:api
+web: npm run start:api
 unpin-gate-cron: npm run start:unpin-gate-cron
