@@ -1,27 +1,73 @@
 import { config } from "../../config";
 import { File, Limit } from "../../infra/database/models";
-import { IFile } from "../../types";
+import { FileIPFSType, IFile } from "../../types";
 // omit isDeleted, isPinned, timeStamp
 interface ICreateFileParams
   extends Omit<IFile, "isDeleted" | "isPinned" | "timeStamp" | "networkName"> {}
 
 export const create = async (params: ICreateFileParams) => {
-  const { fileSize, contractAddress } = params;
-  console.log("params", params);
-  const file = await new File({
+  const { contractAddress } = params;
+
+  const newFile = await new File({
     ...params,
     networkName: config.NETWORK_NAME,
     isDeleted: false,
     isPinned: true,
   }).save();
 
+  if (newFile.ipfsType === FileIPFSType.GATE) {
+    const currentFileGateHashCount = await File.countDocuments({
+      appFileId: params.appFileId,
+      ipfsType: FileIPFSType.GATE,
+      contractAddress: params.contractAddress,
+      markedForUnpin: false,
+      isPinned: true,
+    });
+
+    console.log("currentFileGateHashCount", currentFileGateHashCount);
+
+    if (currentFileGateHashCount > Number(config.MAX_GATE_HISTORY_COUNT)) {
+      // Get IDs of files to keep (most recent ones within the limit)
+      const filesIdsToKeep = await File.find({
+        appFileId: params.appFileId,
+        ipfsType: FileIPFSType.GATE,
+        contractAddress: params.contractAddress,
+        markedForUnpin: false,
+        isPinned: true,
+      })
+        .sort({ timeStamp: -1 })
+        .limit(Number(config.MAX_GATE_HISTORY_COUNT))
+        .select("_id");
+
+      console.log("filesIdsToKeep", filesIdsToKeep.length);
+      // Mark all other files for unpinning
+      await File.updateMany(
+        {
+          appFileId: params.appFileId,
+          ipfsType: FileIPFSType.GATE,
+          contractAddress: params.contractAddress,
+          markedForUnpin: false,
+          isPinned: true,
+          _id: {
+            $nin: [...filesIdsToKeep.map((f) => f._id), newFile._id],
+          },
+        },
+        {
+          $set: {
+            markedForUnpin: true,
+          },
+        }
+      );
+    }
+  }
+
   await Limit.updateOne(
     { contractAddress },
     {
-      $inc: { storageUse: fileSize },
+      $inc: { storageUse: newFile.fileSize },
       $setOnInsert: { contractAddress },
     },
     { upsert: true }
   );
-  return file.toObject();
+  return newFile.toObject();
 };

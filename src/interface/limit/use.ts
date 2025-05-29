@@ -14,7 +14,7 @@ const useValidation = {
 
 async function use(req: CustomRequest, res: Response) {
   const { contractAddress, invokerAddress, chainId } = req;
-  console.log({ contractAddress, invokerAddress, chainId });
+
   if (!contractAddress || !invokerAddress || !chainId) {
     return throwError({
       code: 400,
@@ -23,7 +23,7 @@ async function use(req: CustomRequest, res: Response) {
     });
   }
   const data = await getStorageUse({ contractAddress });
-  console.log({ data });
+
   res.json({ ...data, storageLimit: data.storageLimit + data.extraStorage });
 }
 

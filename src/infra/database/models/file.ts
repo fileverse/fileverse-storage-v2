@@ -38,6 +38,10 @@ const fileSchema = new Schema({
     required: true,
     default: Date.now,
   },
+  markedForUnpin: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 fileSchema.pre("save", function (next) {

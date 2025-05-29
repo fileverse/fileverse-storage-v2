@@ -11,9 +11,9 @@ const getCollaboratorKeys = async (
     abi: portalAbi,
     functionName: "collaboratorKeys",
     args: [collaboratorAddress],
-  })) as [string, string];
+  })) as string;
 
-  return result[1];
+  return result;
 };
 
 export { getCollaboratorKeys };

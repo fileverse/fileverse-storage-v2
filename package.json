@@ -7,8 +7,11 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "dev": "nodemon --exec ts-node src/index.ts",
-    "start": "NODE_ENV=production node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:unpin-gate-cron": "nodemon --exec ts-node src/interface/agenda/unpinGateCron.ts",
+    "start:api": "NODE_ENV=production node dist/index.js",
+    "start:unpin-gate-cron": "NODE_ENV=production node dist/interface/agenda/unpinGateCron.js",
+    "postinstall": "npm run build",
+    "prebuild": "npm run clean"
   },
   "keywords": [
     "storage",
@@ -19,6 +22,7 @@
   "dependencies": {
     "@filebase/sdk": "^1.0.4",
     "@pinata/sdk": "^1.1.26",
+    "agenda": "^5.0.0",
     "aws-sdk": "^2.1209.0",
     "bunyan": "^1.8.15",
     "cors": "^2.8.5",

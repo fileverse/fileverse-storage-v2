@@ -8,54 +8,61 @@ export const portalAbi = [
       },
       {
         internalType: "string",
-        name: "_ownerViewDid",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "_ownerEditDid",
+        name: "_ownerDid",
         type: "string",
       },
       {
         internalType: "address",
-        name: "owner",
+        name: "_owner",
         type: "address",
       },
       {
         internalType: "address",
-        name: "_trustedForwarder",
+        name: "_trustedForwarderAddress",
         type: "address",
       },
       {
         components: [
           {
             internalType: "bytes32",
-            name: "portalEncryptionKeyVerifier",
+            name: "appEncryptionKeyVerifier",
             type: "bytes32",
           },
           {
             internalType: "bytes32",
-            name: "portalDecryptionKeyVerifier",
-            type: "bytes32",
-          },
-          {
-            internalType: "bytes32",
-            name: "memberEncryptionKeyVerifier",
-            type: "bytes32",
-          },
-          {
-            internalType: "bytes32",
-            name: "memberDecryptionKeyVerifier",
+            name: "appDecryptionKeyVerifier",
             type: "bytes32",
           },
         ],
-        internalType: "struct PortalKeyVerifiers.KeyVerifier",
+        internalType: "struct AppKeyVerifiers.KeyVerifier",
         name: "_keyVerifier",
         type: "tuple",
       },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+    ],
+    name: "OwnableInvalidOwner",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+    ],
+    name: "OwnableUnauthorizedAccount",
+    type: "error",
   },
   {
     anonymous: false,
@@ -88,6 +95,18 @@ export const portalAbi = [
       {
         indexed: false,
         internalType: "string",
+        name: "appFileId",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "enum FileverseApp.FileType",
+        name: "fileType",
+        type: "uint8",
+      },
+      {
+        indexed: false,
+        internalType: "string",
         name: "metadataIPFSHash",
         type: "string",
       },
@@ -102,6 +121,12 @@ export const portalAbi = [
         internalType: "string",
         name: "gateIPFSHash",
         type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "version",
+        type: "uint256",
       },
       {
         indexed: true,
@@ -125,6 +150,43 @@ export const portalAbi = [
       {
         indexed: false,
         internalType: "string",
+        name: "appFileId",
+        type: "string",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "by",
+        type: "address",
+      },
+    ],
+    name: "DeletedFile",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "fileId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "appFileId",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "enum FileverseApp.FileType",
+        name: "fileType",
+        type: "uint8",
+      },
+      {
+        indexed: false,
+        internalType: "string",
         name: "metadataIPFSHash",
         type: "string",
       },
@@ -139,6 +201,12 @@ export const portalAbi = [
         internalType: "string",
         name: "gateIPFSHash",
         type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "version",
+        type: "uint256",
       },
       {
         indexed: true,
@@ -197,6 +265,12 @@ export const portalAbi = [
         name: "account",
         type: "address",
       },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "did",
+        type: "string",
+      },
     ],
     name: "RegisteredCollaboratorKeys",
     type: "event",
@@ -239,25 +313,13 @@ export const portalAbi = [
       {
         indexed: false,
         internalType: "bytes32",
-        name: "portalEncryptionKeyVerifier",
+        name: "appEncryptionKeyVerifier",
         type: "bytes32",
       },
       {
         indexed: false,
         internalType: "bytes32",
-        name: "portalDecryptionKeyVerifier",
-        type: "bytes32",
-      },
-      {
-        indexed: false,
-        internalType: "bytes32",
-        name: "memberEncryptionKeyVerifier",
-        type: "bytes32",
-      },
-      {
-        indexed: false,
-        internalType: "bytes32",
-        name: "memberDecryptionKeyVerifier",
+        name: "appDecryptionKeyVerifier",
         type: "bytes32",
       },
     ],
@@ -307,6 +369,16 @@ export const portalAbi = [
     inputs: [
       {
         internalType: "string",
+        name: "_appFileId",
+        type: "string",
+      },
+      {
+        internalType: "enum FileverseApp.FileType",
+        name: "fileType",
+        type: "uint8",
+      },
+      {
+        internalType: "string",
         name: "_metadataIPFSHash",
         type: "string",
       },
@@ -319,11 +391,6 @@ export const portalAbi = [
         internalType: "string",
         name: "_gateIPFSHash",
         type: "string",
-      },
-      {
-        internalType: "enum FileversePortal.FileType",
-        name: "filetype",
-        type: "uint8",
       },
       {
         internalType: "uint256",
@@ -339,6 +406,25 @@ export const portalAbi = [
   {
     inputs: [
       {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    name: "appFileIdToFileId",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "",
         type: "address",
@@ -348,12 +434,7 @@ export const portalAbi = [
     outputs: [
       {
         internalType: "string",
-        name: "viewDid",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "editDid",
+        name: "",
         type: "string",
       },
     ],
@@ -366,6 +447,37 @@ export const portalAbi = [
         internalType: "uint256",
         name: "fileId",
         type: "uint256",
+      },
+    ],
+    name: "deleteFile",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "appFileId",
+        type: "string",
+      },
+    ],
+    name: "deleteFileByAppFileId",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "fileId",
+        type: "uint256",
+      },
+      {
+        internalType: "string",
+        name: "_appFileId",
+        type: "string",
       },
       {
         internalType: "string",
@@ -383,8 +495,8 @@ export const portalAbi = [
         type: "string",
       },
       {
-        internalType: "enum FileversePortal.FileType",
-        name: "filetype",
+        internalType: "enum FileverseApp.FileType",
+        name: "fileType",
         type: "uint8",
       },
       {
@@ -410,6 +522,16 @@ export const portalAbi = [
     outputs: [
       {
         internalType: "string",
+        name: "appFileId",
+        type: "string",
+      },
+      {
+        internalType: "enum FileverseApp.FileType",
+        name: "fileType",
+        type: "uint8",
+      },
+      {
+        internalType: "string",
         name: "metadataIPFSHash",
         type: "string",
       },
@@ -424,14 +546,14 @@ export const portalAbi = [
         type: "string",
       },
       {
-        internalType: "enum FileversePortal.FileType",
-        name: "fileType",
-        type: "uint8",
-      },
-      {
         internalType: "uint256",
         name: "version",
         type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "owner",
+        type: "address",
       },
     ],
     stateMutability: "view",
@@ -440,19 +562,6 @@ export const portalAbi = [
   {
     inputs: [],
     name: "getCollaboratorCount",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getCollaboratorKeysCount",
     outputs: [
       {
         internalType: "uint256",
@@ -493,7 +602,7 @@ export const portalAbi = [
     inputs: [
       {
         internalType: "address",
-        name: "account",
+        name: "_account",
         type: "address",
       },
     ],
@@ -539,22 +648,12 @@ export const portalAbi = [
     outputs: [
       {
         internalType: "bytes32",
-        name: "portalEncryptionKeyVerifier",
+        name: "appEncryptionKeyVerifier",
         type: "bytes32",
       },
       {
         internalType: "bytes32",
-        name: "portalDecryptionKeyVerifier",
-        type: "bytes32",
-      },
-      {
-        internalType: "bytes32",
-        name: "memberEncryptionKeyVerifier",
-        type: "bytes32",
-      },
-      {
-        internalType: "bytes32",
-        name: "memberDecryptionKeyVerifier",
+        name: "appDecryptionKeyVerifier",
         type: "bytes32",
       },
     ],
@@ -589,6 +688,19 @@ export const portalAbi = [
   },
   {
     inputs: [],
+    name: "ownerDid",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "pendingOwner",
     outputs: [
       {
@@ -604,12 +716,7 @@ export const portalAbi = [
     inputs: [
       {
         internalType: "string",
-        name: "viewDid",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "editDid",
+        name: "did",
         type: "string",
       },
     ],
@@ -654,6 +761,19 @@ export const portalAbi = [
     inputs: [
       {
         internalType: "address",
+        name: "_forwarderAddress",
+        type: "address",
+      },
+    ],
+    name: "setForwarderAddress",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "newOwner",
         type: "address",
       },
@@ -664,25 +784,28 @@ export const portalAbi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "trustedForwarder",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "bytes32",
-        name: "portalEncryptionKeyVerifier",
+        name: "appEncryptionKeyVerifier",
         type: "bytes32",
       },
       {
         internalType: "bytes32",
-        name: "portalDecryptionKeyVerifier",
-        type: "bytes32",
-      },
-      {
-        internalType: "bytes32",
-        name: "memberEncryptionKeyVerifier",
-        type: "bytes32",
-      },
-      {
-        internalType: "bytes32",
-        name: "memberDecryptionKeyVerifier",
+        name: "appDecryptionKeyVerifier",
         type: "bytes32",
       },
     ],
