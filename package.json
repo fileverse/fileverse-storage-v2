@@ -4,14 +4,13 @@
   "description": "Storage Service for Fileverse",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "clean": "rm -rf dist",
     "dev": "nodemon --exec ts-node src/index.ts",
     "dev:unpin-gate-cron": "nodemon --exec ts-node src/interface/agenda/unpinGateCron.ts",
     "start:api": "NODE_ENV=production node dist/index.js",
     "start:unpin-gate-cron": "NODE_ENV=production node dist/interface/agenda/unpinGateCron.js",
-    "postinstall": "npm run build",
-    "prebuild": "npm run clean"
+    "postinstall": "npm run build"
   },
   "keywords": [
     "storage",

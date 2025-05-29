@@ -63,3 +63,7 @@ development.env
 .next
 *.log.*
 .gitsigners
+/
+
+# dist
+dist/
