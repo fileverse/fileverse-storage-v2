@@ -13,6 +13,7 @@ export enum FileIPFSType {
   GATE = "GATE",
   CONTENT = "CONTENT",
   METADATA = "METADATA",
+  COMMENT = "COMMENT",
 }
 
 export enum SourceApp {

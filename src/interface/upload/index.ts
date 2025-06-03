@@ -7,7 +7,7 @@ import { asyncHandler, asyncHandlerArray } from "../../infra/asyncHandler";
 
 import upload from "./upload";
 // import uploadPublic from "./public";
-// import uploadComment from "./comment";
+import uploadComment from "./comment";
 
 // middlewares
 import { canUpload } from "../middleware";
@@ -19,11 +19,6 @@ router.post(
   asyncHandlerArray(upload)
 );
 
-// router.post(
-//   "/comment",
-//   asyncHandler(canComment),
-//   fileUpload(),
-//   asyncHandlerArray(uploadComment)
-// );
+router.post("/comment", fileUpload(), asyncHandlerArray(uploadComment));
 
 export default router;

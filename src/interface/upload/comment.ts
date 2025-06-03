@@ -1,13 +1,14 @@
 import { upload } from "../../domain";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
-import { CustomRequest } from "../../types";
+import { CustomRequest, FileIPFSType } from "../../types";
 import { isArray } from "util";
 import { Response } from "express";
 
 const uploadValidation = {
   headers: Joi.object({
     invoker: Joi.string().optional(),
+    contract: Joi.string().optional(),
   }).unknown(true),
 };
 const commentSchema = Joi.object({
@@ -42,8 +43,10 @@ async function uploadCommentFn(req: CustomRequest, res: Response) {
   const createdFile = await upload({
     // @ts-ignore
     file: req.files?.file,
+    ipfsType: FileIPFSType.COMMENT,
+    contractAddress: req.headers.contract as string,
   }).catch(console.log);
   res.json(createdFile);
 }
 
-module.exports = [validate(uploadValidation), uploadCommentFn];
+export default [validate(uploadValidation), uploadCommentFn];

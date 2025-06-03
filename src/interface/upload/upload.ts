@@ -4,7 +4,6 @@ import { upload } from "../../domain";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
-// import { Log } from "../../domain/file";
 
 const uploadValidation = {
   headers: Joi.object({
