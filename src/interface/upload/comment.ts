@@ -46,6 +46,7 @@ async function uploadCommentFn(req: CustomRequest, res: Response) {
     ipfsType: FileIPFSType.COMMENT,
     contractAddress: req.headers.contract as string,
   }).catch(console.log);
+
   res.json(createdFile);
 }
 

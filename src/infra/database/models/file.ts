@@ -7,14 +7,14 @@ const fileSchema = new Schema({
   contractAddress: {
     type: String,
     lowercase: true,
-    required: true,
+    required: false,
     index: true,
   },
   gatewayUrl: {
     type: String,
     required: true,
   },
-  appFileId: { type: String, index: true },
+  appFileId: { type: String, index: false },
   networkName: { type: String, default: config.NETWORK_NAME },
   ipfsHash: { type: String },
   fileSize: { type: Number },
