@@ -3,6 +3,6 @@ import address from "./address";
 
 const router = express.Router();
 
-router.get("/address", address);
+router.post("/address", address);
 
 export default router;
