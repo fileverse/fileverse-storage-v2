@@ -19,7 +19,7 @@ interface ICommunityFileResponse {
   totalFavorites: number;
   fileIPFSHash: string;
   timeStamp: number;
-  isFavoritedByInvoker?: boolean;
+  isFavourite?: boolean;
 }
 
 interface IPaginatedResponse {
@@ -95,7 +95,7 @@ export const list = async (
     };
 
     if (invokerAddress) {
-      result.isFavoritedByInvoker =
+      result.isFavourite =
         fileObj.favoritedBy?.includes(invokerAddress) || false;
     }
 
