@@ -17,7 +17,7 @@ interface ICommunityFileResponse {
   title: string;
   category: string;
   totalFavorites: number;
-  fileIPFSHash: string;
+  fileLink: string;
   timeStamp: number;
   isFavourite?: boolean;
 }

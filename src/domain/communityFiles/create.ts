@@ -5,19 +5,18 @@ interface ICreateCommunityFilesParams {
   thumbnailIPFSHash: string;
   title: string;
   category: string;
-  fileIPFSHash: string;
+  fileLink: string;
 }
 
 export const create = async (params: ICreateCommunityFilesParams) => {
-  const { publishedBy, thumbnailIPFSHash, title, category, fileIPFSHash } =
-    params;
+  const { publishedBy, thumbnailIPFSHash, title, category, fileLink } = params;
 
   const newCommunityFile = await new CommunityFiles({
     publishedBy,
     thumbnailIPFSHash,
     title,
     category,
-    fileIPFSHash,
+    fileLink,
   }).save();
 
   return newCommunityFile;

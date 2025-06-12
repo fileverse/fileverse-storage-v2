@@ -31,7 +31,7 @@ const communityFilesSchema = new Schema({
     default: [],
     index: true,
   },
-  fileIPFSHash: {
+  fileLink: {
     type: String,
     required: true,
   },

@@ -9,12 +9,12 @@ const publishValidation = {
     thumbnailIPFSHash: Joi.string().required(),
     title: Joi.string().required(),
     category: Joi.string().required(),
-    fileIPFSHash: Joi.string().required(),
+    fileLink: Joi.string().required(),
   }),
 };
 
 const publish = async (req: CustomRequest, res: Response) => {
-  const { publishedBy, thumbnailIPFSHash, title, category, fileIPFSHash } =
+  const { publishedBy, thumbnailIPFSHash, title, category, fileLink } =
     req.body;
 
   const createdFile = await create({
@@ -22,7 +22,7 @@ const publish = async (req: CustomRequest, res: Response) => {
     thumbnailIPFSHash,
     title,
     category,
-    fileIPFSHash,
+    fileLink,
   });
 
   res.json(createdFile);
