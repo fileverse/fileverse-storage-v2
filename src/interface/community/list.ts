@@ -3,18 +3,18 @@ import { Response } from "express";
 import { Joi, validate } from "../middleware";
 import { CustomRequest } from "../../types";
 
-const listValidation = {
-  query: Joi.object({
-    page: Joi.number().optional(),
-    limit: Joi.number().optional(),
-    category: Joi.string().optional(),
-    search: Joi.string().optional(),
-    onlyFavorites: Joi.boolean().optional(),
-  }),
-  headers: Joi.object({
-    invoker: Joi.string().optional(),
-  }),
-};
+// const listValidation = {
+//   query: Joi.object({
+//     page: Joi.number().optional(),
+//     limit: Joi.number().optional(),
+//     category: Joi.string().optional(),
+//     search: Joi.string().optional(),
+//     onlyFavorites: Joi.boolean().optional(),
+//   }),
+//   headers: Joi.object({
+//     invoker: Joi.string().optional(),
+//   }),
+// };
 
 const getList = async (req: CustomRequest, res: Response) => {
   const { page, limit, category, search, onlyFavorites } = req.query;
@@ -30,4 +30,4 @@ const getList = async (req: CustomRequest, res: Response) => {
   res.json(files);
 };
 
-export default [validate(listValidation), getList];
+export default [getList];
