@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 
 enum Category {
   Finance = "Finance",
-  AiAndLLM = "Ai and LLM's",
+  AiAndLLM = "Ai and LLMs",
   Development = "Development",
 }
 
@@ -23,7 +23,7 @@ const communityFilesSchema = new Schema({
   },
   category: {
     type: String,
-    enum: Category,
+    enum: Object.values(Category),
     required: true,
   },
   favoritedBy: {
@@ -35,10 +35,22 @@ const communityFilesSchema = new Schema({
     type: String,
     required: true,
   },
+  dsheetId: {
+    type: String,
+    required: true,
+  },
   timeStamp: {
     type: Number,
     required: true,
     default: Date.now,
+  },
+  userHash: {
+    type: String,
+    required: true,
+  },
+  portalAddress: {
+    type: String,
+    required: true,
   },
 });
 

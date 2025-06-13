@@ -36,3 +36,14 @@ export interface IFile {
   isPinned: boolean;
   sourceApp: SourceApp;
 }
+
+export interface ICreateCommunityFilesParams {
+  publishedBy: string;
+  thumbnailIPFSHash: string;
+  title: string;
+  category: string;
+  fileLink: string;
+  dsheetId: string;
+  userHash: string;
+  portalAddress: string;
+}

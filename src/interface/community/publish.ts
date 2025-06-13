@@ -2,6 +2,7 @@ import { create } from "../../domain/communityFiles";
 import { Response } from "express";
 import { Joi, validate } from "../middleware";
 import { CustomRequest } from "../../types";
+import { ICreateCommunityFilesParams } from "../../types";
 
 const publishValidation = {
   body: Joi.object({
@@ -10,20 +11,16 @@ const publishValidation = {
     title: Joi.string().required(),
     category: Joi.string().required(),
     fileLink: Joi.string().required(),
+    dsheetId: Joi.string().required(),
+    userHash: Joi.string().required(),
+    portalAddress: Joi.string().required(),
   }),
 };
 
 const publish = async (req: CustomRequest, res: Response) => {
-  const { publishedBy, thumbnailIPFSHash, title, category, fileLink } =
-    req.body;
+  const params = req.body as ICreateCommunityFilesParams;
 
-  const createdFile = await create({
-    publishedBy,
-    thumbnailIPFSHash,
-    title,
-    category,
-    fileLink,
-  });
+  const createdFile = await create(params);
 
   res.json(createdFile);
 };
