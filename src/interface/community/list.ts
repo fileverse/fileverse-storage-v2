@@ -2,7 +2,7 @@ import { list } from "../../domain/communityFiles";
 import { Response } from "express";
 import { Joi, validate } from "../middleware";
 import { CustomRequest } from "../../types";
-
+// TODO: add validation
 // const listValidation = {
 //   query: Joi.object({
 //     page: Joi.number().optional(),
