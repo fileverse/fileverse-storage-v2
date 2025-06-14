@@ -5,12 +5,18 @@ import { CustomRequest } from "../../types";
 
 // eslint-disable-next-line no-unused-vars
 export const expressErrorHandler = (
-  err: Error & { statusCode?: number; code?: number; token?: string },
+  err: Error & {
+    statusCode?: number;
+    code?: number;
+    token?: string;
+    details?: any;
+  },
   req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
-  // Error Reporting to Slack
+  console.log("error", err.details);
+
   const errorMessage = `Message: ${err.message}\nError Code: ${
     err.statusCode || err.code
   }`;

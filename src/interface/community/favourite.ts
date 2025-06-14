@@ -9,7 +9,7 @@ const favouriteValidation = {
   }),
   headers: Joi.object({
     invoker: Joi.string().required(),
-  }),
+  }).unknown(true),
 };
 
 const setFavourite = async (req: CustomRequest, res: Response) => {
