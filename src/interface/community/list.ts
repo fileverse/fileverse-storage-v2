@@ -17,7 +17,8 @@ import { CustomRequest } from "../../types";
 // };
 
 const getList = async (req: CustomRequest, res: Response) => {
-  const { page, limit, category, search, onlyFavorites } = req.query;
+  const { page, limit, category, search, onlyFavorites, publishedBy } =
+    req.query;
   const { invokerAddress } = req;
   const files = await list({
     page: page ? Number(page) : undefined,
@@ -26,6 +27,7 @@ const getList = async (req: CustomRequest, res: Response) => {
     search: search?.toString(),
     onlyFavorites: onlyFavorites ? onlyFavorites === "true" : undefined,
     invokerAddress: invokerAddress ? invokerAddress : undefined,
+    publishedBy: publishedBy?.toString(),
   });
   res.json(files);
 };
