@@ -1,9 +1,11 @@
 import { Schema, model } from "mongoose";
 
 enum Category {
-  Finance = "Finance",
-  AiAndLLM = "Ai and LLMs",
-  Development = "Development",
+  DeFi = "DeFi",
+  Accounting = "Accounting",
+  CreativeDSheet = "Creative dSheets",
+  PortfolioManagement = "Portfolio Management",
+  EventsAndConferences = "Events and conferences",
 }
 
 const communityFilesSchema = new Schema({
