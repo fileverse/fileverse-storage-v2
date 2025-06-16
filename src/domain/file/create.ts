@@ -61,13 +61,16 @@ export const create = async (params: ICreateFileParams) => {
     }
   }
 
-  await Limit.updateOne(
-    { contractAddress },
-    {
-      $inc: { storageUse: newFile.fileSize },
-      $setOnInsert: { contractAddress },
-    },
-    { upsert: true }
-  );
+  // People are hitting ceiling too fast
+  if (newFile.ipfsType === FileIPFSType.CONTENT) {
+    await Limit.updateOne(
+      { contractAddress },
+      {
+        $inc: { storageUse: newFile.fileSize },
+        $setOnInsert: { contractAddress },
+      },
+      { upsert: true }
+    );
+  }
   return newFile.toObject();
 };
