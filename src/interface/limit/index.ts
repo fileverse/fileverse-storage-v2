@@ -10,12 +10,13 @@ const router = Router();
 import {
   canCheckLimit,
   canCheckLimitUse,
-  isAuthenticated,
+  canUpdateLimit,
+  // isAuthenticated,
 } from "../middleware";
 
 router.get("/check", asyncHandler(canCheckLimit), asyncHandlerArray(check));
 router.get("/use", asyncHandler(canCheckLimitUse), asyncHandlerArray(use));
 
-router.put("/extend", asyncHandler(isAuthenticated), asyncHandlerArray(extend));
+router.put("/extend", asyncHandler(canUpdateLimit), asyncHandlerArray(extend));
 
 export default router;
