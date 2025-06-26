@@ -16,19 +16,19 @@ const limitSchema = new Schema({
     default: null,
   },
   storageLimit: {
-    type: Number,
-    default: config.DEFAULT_STORAGE_LIMIT || 200000000,
+    type: Schema.Types.Decimal128,
+    default: config.DEFAULT_STORAGE_LIMIT || 2000000000,
   },
   storageUse: {
-    type: Number,
+    type: Schema.Types.Decimal128,
     default: 0,
   },
   extraStorage: {
-    type: Number,
+    type: Schema.Types.Decimal128,
     default: 0,
   },
   extendableStorage: {
-    type: Number,
+    type: Schema.Types.Decimal128,
     default: 1000000000, // 1GB
   },
   unit: { type: String, default: "bytes" },

@@ -24,7 +24,10 @@ async function use(req: CustomRequest, res: Response) {
   }
   const data = await getStorageUse({ contractAddress });
 
-  res.json({ ...data, storageLimit: data.storageLimit + data.extraStorage });
+  res.json({
+    ...data,
+    storageLimit: Number(data.storageLimit) + data.extraStorage,
+  });
 }
 
 export default [validate(useValidation), use];

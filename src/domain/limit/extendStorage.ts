@@ -7,7 +7,11 @@ export const extendStorage = async ({
 }) => {
   const limit = await Limit.findOne({ contractAddress });
 
-  if (limit && limit.extendableStorage && limit.extendableStorage <= 0) {
+  if (
+    limit &&
+    limit.extendableStorage &&
+    Number(limit.extendableStorage) <= 0
+  ) {
     throw new Error("No storage available to extend");
   }
 

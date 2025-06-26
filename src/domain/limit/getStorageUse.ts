@@ -12,11 +12,17 @@ export const getStorageUse = async ({
     ? parseInt(config.DEFAULT_STORAGE_LIMIT) // need to typecast to int env vars are string values or undefined
     : DEFAULT_STORAGE_LIMIT;
 
+  const storageLimit = limit?.storageLimit
+    ? Number(limit.storageLimit)
+    : defaultStorageLimit;
+  const storageUse = limit?.storageUse ? Number(limit.storageUse) : 0;
+  const extraStorage = limit?.extraStorage ? Number(limit.extraStorage) : 0;
+
   return {
     contractAddress,
-    storageLimit: limit?.storageLimit || defaultStorageLimit,
-    storageUse: limit?.storageUse || 0,
+    storageLimit,
+    storageUse,
     unit: limit?.unit || "bytes",
-    extraStorage: limit?.extraStorage || 0,
+    extraStorage,
   };
 };

@@ -13,9 +13,10 @@ export const checkStorageLimit = async (
   }
 
   const limit = await getStorageUse({ contractAddress });
-  const totalAllowedStorage = limit.storageLimit + limit.extraStorage;
+  const totalAllowedStorage =
+    Number(limit.storageLimit) + Number(limit.extraStorage);
 
-  return limit.storageUse >= totalAllowedStorage;
+  return Number(limit.storageUse) >= totalAllowedStorage;
 };
 
 export const canUpload = async (
