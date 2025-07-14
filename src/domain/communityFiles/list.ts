@@ -46,22 +46,22 @@ export const list = async (
     limit = 20,
   } = params;
 
-  const query: any = {};
+  const baseCriteria: any = {};
 
   if (publishedBy) {
-    query.publishedBy = publishedBy;
+    baseCriteria.publishedBy = publishedBy;
   }
 
   if (category) {
-    query.category = category;
+    baseCriteria.category = category;
   }
 
   if (onlyFavorites && invokerAddress) {
-    query.favoritedBy = { $in: [invokerAddress] };
+    baseCriteria.favoritedBy = { $in: [invokerAddress] };
   }
 
   if (search) {
-    query.$or = [
+    baseCriteria.$or = [
       { title: { $regex: search, $options: "i" } },
       { publishedBy: { $regex: search, $options: "i" } },
     ];
@@ -71,14 +71,25 @@ export const list = async (
   const pageLimit = Math.max(1, Math.min(100, limit));
   const skip = (currentPage - 1) * pageLimit;
 
-  const totalFiles = await CommunityFiles.countDocuments(query);
+  const totalFiles = await CommunityFiles.countDocuments(baseCriteria);
   const totalPages = Math.ceil(totalFiles / pageLimit);
 
   const itemsToFetch = pageLimit + 1;
-  const communityFiles = await CommunityFiles.find(query)
-    .sort({ timeStamp: -1 })
-    .skip(skip)
-    .limit(itemsToFetch);
+
+  // Use aggregation pipeline to sort by number of favorites
+  const pipeline: any[] = [
+    { $match: baseCriteria },
+    {
+      $addFields: {
+        favoritesCount: { $size: { $ifNull: ["$favoritedBy", []] } },
+      },
+    },
+    { $sort: { favoritesCount: -1 } },
+    { $skip: skip },
+    { $limit: itemsToFetch },
+  ];
+
+  const communityFiles = await CommunityFiles.aggregate(pipeline);
 
   const hasMoreItems = communityFiles.length > pageLimit;
   const actualFiles = hasMoreItems
@@ -86,17 +97,14 @@ export const list = async (
     : communityFiles;
 
   const transformedFiles: ICommunityFileResponse[] = actualFiles.map((file) => {
-    const fileObj = file.toObject();
-
     const result: ICommunityFileResponse = {
-      ...fileObj,
-      _id: fileObj._id.toString(),
-      totalFavorites: fileObj.favoritedBy?.length || 0,
+      ...file,
+      _id: file._id.toString(),
+      totalFavorites: file.favoritedBy?.length || 0,
     };
 
     if (invokerAddress) {
-      result.isFavourite =
-        fileObj.favoritedBy?.includes(invokerAddress) || false;
+      result.isFavourite = file.favoritedBy?.includes(invokerAddress) || false;
     }
 
     return result;
