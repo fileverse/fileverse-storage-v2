@@ -5,7 +5,7 @@ import { throwError } from "../../infra/errorHandler";
 import { Response } from "express";
 
 const deleteValidation = {
-  header: Joi.object({
+  headers: Joi.object({
     contract: Joi.string().required(),
   }).unknown(true),
   params: Joi.object({
