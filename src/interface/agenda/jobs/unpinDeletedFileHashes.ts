@@ -5,14 +5,15 @@ import { File } from "../../../infra/database/models";
 import { FileIPFSType } from "../../../types";
 import { unpin } from "../../../domain";
 import { updatePinningStatus } from "../../../domain/file/updatePinningStatus";
-const JOB_NAME = "UNPIN_GATE_HASH_CRON";
 
-const MAX_UNPIN_COUNT = 100;
+const JOB_NAME = "UNPIN_DELETED_FILE_HASH_CRON";
+
+const MAX_BATCH_SIZE = 100;
 
 async function jobDefinition(job: Job, done: (args?: any) => void) {
   try {
     logger.info(`Job ${JOB_NAME} started`);
-    await unpinGateHashes();
+    await unpinDeletedFileHashes();
     logger.info(`Job ${JOB_NAME} completed`);
     done();
   } catch (error) {
@@ -26,15 +27,15 @@ async function setupJob() {
   agenda.every("1 minute", JOB_NAME);
 }
 
-async function unpinGateHashes() {
+async function unpinDeletedFileHashes() {
   const files = await File.find({
     isPinned: true,
-    isDeleted: false,
-    ipfsType: FileIPFSType.GATE,
+    isDeleted: true,
     markedForUnpin: true,
-  }).limit(MAX_UNPIN_COUNT);
+  }).limit(MAX_BATCH_SIZE);
 
-  logger.info(`Unpinning ${files.length} gate hashes`);
+  logger.info(`Unpinning ${files.length} deleted file hashes`);
+
   for (const file of files) {
     const mongoObjectId = file._id.toString();
     try {

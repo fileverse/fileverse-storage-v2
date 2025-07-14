@@ -6,3 +6,4 @@ export { canCheckLimit } from "./canCheckLimit";
 export { canUpdateLimit } from "./canUpdateLimit";
 export { canCheckLimitUse } from "./canCheckLimitUse";
 export { isAuthenticated } from "./isAuthenticated";
+export { canDelete } from "./canDelete";
