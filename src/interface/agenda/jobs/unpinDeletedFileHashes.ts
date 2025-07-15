@@ -2,7 +2,6 @@ import { Job } from "agenda";
 import { agenda } from "../";
 import { logger } from "../../../infra/logger";
 import { File } from "../../../infra/database/models";
-import { FileIPFSType } from "../../../types";
 import { unpin } from "../../../domain";
 import { updatePinningStatus } from "../../../domain/file/updatePinningStatus";
 
@@ -57,6 +56,8 @@ async function unpinDeletedFileHashes() {
         logger.info(
           `Updated DB State only for ${file.ipfsHash}, because already unpinned`
         );
+      } else {
+        logger.error(`Error unpinning ${file.ipfsHash}:`, error);
       }
     }
   }

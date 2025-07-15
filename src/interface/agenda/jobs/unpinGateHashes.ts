@@ -49,6 +49,8 @@ async function unpinGateHashes() {
         logger.info(
           `Updated DB State only for ${file.ipfsHash}, because already unpinned`
         );
+      } else {
+        logger.error(`Error unpinning ${file.ipfsHash}:`, error);
       }
     }
   }
