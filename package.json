@@ -10,6 +10,8 @@
     "dev:unpin-gate-cron": "nodemon --exec ts-node src/interface/agenda/unpinGateCron.ts",
     "start": "NODE_ENV=production node dist/index.js",
     "start:unpin-gate-cron": "NODE_ENV=production node dist/interface/agenda/unpinGateCron.js",
+    "start:unpin-deleted-file-cron": "NODE_ENV=production node dist/interface/agenda/unpinDeletedFileCron.js",
+    "dev:unpin-deleted-file-cron": "nodemon --exec ts-node src/interface/agenda/unpinDeletedFileCron.ts",
     "postinstall": "npm run build"
   },
   "keywords": [
