@@ -24,8 +24,6 @@ export const create = async (params: ICreateFileParams) => {
       isPinned: true,
     });
 
-    console.log("currentFileGateHashCount", currentFileGateHashCount);
-
     if (currentFileGateHashCount > Number(config.MAX_GATE_HISTORY_COUNT)) {
       // Get IDs of files to keep (most recent ones within the limit)
       const filesIdsToKeep = await File.find({
@@ -39,7 +37,6 @@ export const create = async (params: ICreateFileParams) => {
         .limit(Number(config.MAX_GATE_HISTORY_COUNT))
         .select("_id");
 
-      console.log("filesIdsToKeep", filesIdsToKeep.length);
       // Mark all other files for unpinning
       await File.updateMany(
         {

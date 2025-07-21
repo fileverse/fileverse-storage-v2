@@ -54,7 +54,7 @@ export const upload = async (
 
     return formatUploadResponse(file);
   } catch (err) {
-    console.log("error while uploading to pinata", err);
+    console.error("error while uploading to pinata", err);
     throw err;
   }
 };
@@ -72,7 +72,7 @@ export const unpin = async (ipfsHash: string) => {
   try {
     await pinataClient.unpin(ipfsHash);
   } catch (err) {
-    console.log("error while unpinning from pinata", err);
+    console.error("error while unpinning from pinata", err);
     throw err;
   }
 };

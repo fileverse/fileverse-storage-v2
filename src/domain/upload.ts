@@ -2,9 +2,6 @@ import { Readable } from "stream";
 import { create } from "./file";
 import { upload as uploadToPinata } from "./ipfs";
 import { FileIPFSType, SourceApp } from "../types";
-// import { Cache } from "./cache";
-
-// const cache = new Cache();
 
 interface IUploadParams {
   appFileId: string;
@@ -35,23 +32,7 @@ export const upload = async (params: IUploadParams) => {
   // Set path property using Object.assign since path is not a standard Readable property
   Object.assign(stream, { path: name });
 
-  // Calculate file size
-  const filesize = data.length;
-
-  console.log(
-    "Uploading file:",
-    mimetype,
-    ", size:",
-    filesize,
-    ", bytes from contract:",
-    contractAddress,
-    ", invoker:",
-    invokerAddress
-  );
-
   const ipfsFile = await uploadToPinata(stream, { name });
-
-  // const cachedFile = await cache.queue(ipfsFile);
 
   await create({
     appFileId,

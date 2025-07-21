@@ -5,7 +5,6 @@ import { logger } from "../logger";
 
 // Build the connection string
 const dbURI = config.MONGOURI || "mongodb://localhost/boilerplate_graphql";
-console.log("dbURI", dbURI);
 // Create the database connection
 mongoose.connect(dbURI, (err) => {
   if (err) {
