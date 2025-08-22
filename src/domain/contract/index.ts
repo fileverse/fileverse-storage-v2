@@ -16,4 +16,15 @@ const getCollaboratorKeys = async (
   return result;
 };
 
-export { getCollaboratorKeys };
+const getFileIdByAppFileId = async (appFileId: string, portalAddress: Hex) => {
+  const result = (await publicClient.readContract({
+    address: portalAddress,
+    abi: portalAbi,
+    functionName: "appFileIdToFileId",
+    args: [appFileId],
+  })) as bigint;
+
+  return result.toString();
+};
+
+export { getCollaboratorKeys, getFileIdByAppFileId };
