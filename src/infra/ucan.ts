@@ -1,5 +1,8 @@
 import { config } from "../config";
-import { getCollaboratorKeys } from "../domain/contract";
+import {
+  getCollaboratorKeys,
+  getLegacyCollaboratorKeys,
+} from "../domain/contract";
 import { v4 as uuidv4 } from "uuid";
 import * as ucans from "ucans";
 import { Hex } from "viem";
@@ -15,12 +18,13 @@ async function validateContractAddress(
 ) {
   let invokerDid = null;
 
-  try {
-    invokerDid = await getCollaboratorKeys(invokerAddress, contractAddress);
-  } catch (error) {
-    console.error("Error retrieving invoker DID:", error);
-    return false;
-  }
+  invokerDid = await getCollaboratorKeys(invokerAddress, contractAddress);
+
+  if (!invokerDid)
+    invokerDid = await getLegacyCollaboratorKeys(
+      invokerAddress,
+      contractAddress
+    );
 
   if (!invokerDid) {
     return false;
