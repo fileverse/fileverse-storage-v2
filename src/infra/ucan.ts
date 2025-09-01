@@ -10,59 +10,98 @@ import { NextFunction, Response } from "express";
 import { CustomRequest } from "../types";
 
 const serviceDID = config.SERVICE_DID as string;
+interface ValidationResult {
+  ok: boolean;
+  actualContractAddress: Hex | null;
+}
 
 async function validateContractAddress(
-  contractAddress: Hex,
+  contractAddresses: Hex[],
   invokerAddress: Hex,
   token: string
 ) {
   let invokerDid = null;
-  let isLegacyContract = false;
 
-  invokerDid = await getCollaboratorKeys(invokerAddress, contractAddress);
+  const result: ValidationResult = {
+    ok: false,
+    actualContractAddress: null,
+  };
 
-  if (!invokerDid) {
-    invokerDid = await getLegacyCollaboratorKeys(
-      invokerAddress,
-      contractAddress
-    );
-    isLegacyContract = true;
-  }
+  for (const contractAddress of contractAddresses) {
+    invokerDid = await getCollaboratorKeys(invokerAddress, contractAddress);
 
-  if (!invokerDid) {
-    return {
-      ok: false,
-      isLegacyContract,
-    };
-  }
+    if (!invokerDid) {
+      invokerDid = await getLegacyCollaboratorKeys(
+        invokerAddress,
+        contractAddress
+      );
+    }
 
-  try {
-    const result = await ucans.verify(token, {
-      audience: serviceDID,
-      requiredCapabilities: [
-        {
-          capability: {
-            with: {
-              scheme: "storage",
-              hierPart: contractAddress.toLowerCase(),
+    if (invokerDid) {
+      try {
+        const verificationResult = await ucans.verify(token, {
+          audience: serviceDID,
+          requiredCapabilities: [
+            {
+              capability: {
+                with: {
+                  scheme: "storage",
+                  hierPart: contractAddress.toLowerCase(),
+                },
+                can: { namespace: "file", segments: ["CREATE"] },
+              },
+              rootIssuer: invokerDid as string,
             },
-            can: { namespace: "file", segments: ["CREATE"] },
-          },
-          rootIssuer: invokerDid as string,
-        },
-      ],
-    });
-    return {
-      ok: result.ok,
-      isLegacyContract,
-    };
-  } catch (error) {
-    console.error("Error verifying UCAN with contract address:", error);
-    return {
-      ok: false,
-      isLegacyContract,
-    };
+          ],
+        });
+        result.ok = verificationResult.ok;
+        result.actualContractAddress = contractAddress;
+      } catch (err) {
+        console.error("Error verifying UCAN with contract address:", err);
+      }
+    }
+
+    if (result.ok) {
+      return result;
+    }
   }
+
+  return result;
+
+  // if (!invokerDid || !actualContractAddress) {
+  //   return {
+  //     ok: false,
+  //     actualContractAddress: actualContractAddress,
+  //   };
+  // }
+
+  // try {
+  //   const result = await ucans.verify(token, {
+  //     audience: serviceDID,
+  //     requiredCapabilities: [
+  //       {
+  //         capability: {
+  //           with: {
+  //             scheme: "storage",
+  //             hierPart: actualContractAddress.toLowerCase(),
+  //           },
+  //           can: { namespace: "file", segments: ["CREATE"] },
+  //         },
+  //         rootIssuer: invokerDid as string,
+  //       },
+  //     ],
+  //   });
+  //   return {
+  //     ok: result.ok,
+  //     actualContractAddress: actualContractAddress,
+  //   };
+  // } catch (error) {
+  //   console.error("Error verifying UCAN with contract address:", error);
+  //   return {
+  //     ok: false,
+  //     actualContractAddress: actualContractAddress,
+  //   };
+  // }
 }
 
 async function validateInvokerAddress(invokerAddress: Hex, token: string) {
@@ -115,14 +154,14 @@ const verify = async (
 
   token = token.startsWith("Bearer ") ? token.slice(7, token.length) : token;
 
-  if (contractAddress) {
-    const { ok, isLegacyContract } = await validateContractAddress(
-      req.contractAddress as Hex,
+  if (contractAddresses.length > 0) {
+    const { ok, actualContractAddress } = await validateContractAddress(
+      contractAddresses as Hex[],
       invokerAddress as Hex,
       token
     );
     req.isAuthenticated = ok;
-    req.isLegacyContract = isLegacyContract;
+    req.contractAddress = actualContractAddress as Hex;
   } else {
     req.isAuthenticated = await validateInvokerAddress(
       invokerAddress as Hex,
