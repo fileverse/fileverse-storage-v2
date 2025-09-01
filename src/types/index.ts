@@ -7,6 +7,8 @@ export interface CustomRequest extends Request {
   contractAddress?: string | null;
   chainId?: string | null;
   address?: string;
+  isLegacyContract?: boolean;
+  contractAddresses?: string[] | null;
 }
 
 export enum FileIPFSType {

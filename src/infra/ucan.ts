@@ -17,17 +17,23 @@ async function validateContractAddress(
   token: string
 ) {
   let invokerDid = null;
+  let isLegacyContract = false;
 
   invokerDid = await getCollaboratorKeys(invokerAddress, contractAddress);
 
-  if (!invokerDid)
+  if (!invokerDid) {
     invokerDid = await getLegacyCollaboratorKeys(
       invokerAddress,
       contractAddress
     );
+    isLegacyContract = true;
+  }
 
   if (!invokerDid) {
-    return false;
+    return {
+      ok: false,
+      isLegacyContract,
+    };
   }
 
   try {
@@ -46,10 +52,16 @@ async function validateContractAddress(
         },
       ],
     });
-    return result.ok;
+    return {
+      ok: result.ok,
+      isLegacyContract,
+    };
   } catch (error) {
     console.error("Error verifying UCAN with contract address:", error);
-    return false;
+    return {
+      ok: false,
+      isLegacyContract,
+    };
   }
 }
 
@@ -86,7 +98,12 @@ const verify = async (
   req.requestId = uuidv4();
   req.isAuthenticated = false;
   req.invokerAddress = invokerAddress;
-  req.contractAddress = contractAddress;
+  const contractAddresses = contractAddress ? contractAddress.split(",") : [];
+
+  req.contractAddress = contractAddresses[0];
+  if (contractAddresses.length > 0) {
+    req.contractAddresses = contractAddresses;
+  }
   req.chainId = chainId;
   console.log("req.requestId: ", req.requestId);
 
@@ -99,11 +116,13 @@ const verify = async (
   token = token.startsWith("Bearer ") ? token.slice(7, token.length) : token;
 
   if (contractAddress) {
-    req.isAuthenticated = await validateContractAddress(
-      contractAddress as Hex,
+    const { ok, isLegacyContract } = await validateContractAddress(
+      req.contractAddress as Hex,
       invokerAddress as Hex,
       token
     );
+    req.isAuthenticated = ok;
+    req.isLegacyContract = isLegacyContract;
   } else {
     req.isAuthenticated = await validateInvokerAddress(
       invokerAddress as Hex,
