@@ -67,41 +67,6 @@ async function validateContractAddress(
   }
 
   return result;
-
-  // if (!invokerDid || !actualContractAddress) {
-  //   return {
-  //     ok: false,
-  //     actualContractAddress: actualContractAddress,
-  //   };
-  // }
-
-  // try {
-  //   const result = await ucans.verify(token, {
-  //     audience: serviceDID,
-  //     requiredCapabilities: [
-  //       {
-  //         capability: {
-  //           with: {
-  //             scheme: "storage",
-  //             hierPart: actualContractAddress.toLowerCase(),
-  //           },
-  //           can: { namespace: "file", segments: ["CREATE"] },
-  //         },
-  //         rootIssuer: invokerDid as string,
-  //       },
-  //     ],
-  //   });
-  //   return {
-  //     ok: result.ok,
-  //     actualContractAddress: actualContractAddress,
-  //   };
-  // } catch (error) {
-  //   console.error("Error verifying UCAN with contract address:", error);
-  //   return {
-  //     ok: false,
-  //     actualContractAddress: actualContractAddress,
-  //   };
-  // }
 }
 
 async function validateInvokerAddress(invokerAddress: Hex, token: string) {

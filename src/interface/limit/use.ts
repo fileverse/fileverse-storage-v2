@@ -7,6 +7,7 @@ import { throwError } from "../../infra/errorHandler";
 import { isLegacyContract } from "../../domain/contract";
 import { Hex } from "viem";
 import { config } from "../../config";
+import LegacyPortalLimit from "../../infra/database/models/legacy-portal-limit";
 
 const useValidation = {
   headers: Joi.object({
@@ -18,9 +19,25 @@ const useValidation = {
 
 const getLegacyStorageUse = async ({
   contractAddress,
+  allContracts,
+  invokerAddress,
 }: {
   contractAddress: string;
+  allContracts: string[];
+  invokerAddress: string;
 }) => {
+  const legacyPortalLimit = await LegacyPortalLimit.findOne({
+    contractAddress,
+  });
+  if (legacyPortalLimit) {
+    return {
+      storageLimit: Number(legacyPortalLimit.storageLimit),
+      extraStorage: Number(legacyPortalLimit.extraStorage),
+      storageUse: Number(legacyPortalLimit.storageUse),
+      unit: "bytes",
+      contractAddress,
+    };
+  }
   const response = await fetch(
     `${config.LEGACY_STORAGE_BACKEND}/limit/legacy-use`,
     {
@@ -40,13 +57,28 @@ const getLegacyStorageUse = async ({
       contractAddress,
     };
   }
-  return response.json() as Promise<{
-    storageLimit: number;
-    extraStorage: number;
-    storageUse: number;
-    unit: string;
-    contractAddress: string;
-  }>;
+  const data = await response.json();
+  const parentPortalAddress = allContracts.find(
+    (contract) => contract !== contractAddress
+  );
+  if (parentPortalAddress) {
+    await LegacyPortalLimit.create({
+      contractAddress,
+      storageLimit: data.storageLimit,
+      extraStorage: data.extraStorage,
+      storageUse: data.storageUse,
+      unit: data.unit,
+      parentPortalAddress: parentPortalAddress,
+      invokerAddress,
+    });
+  }
+  return {
+    storageLimit: data.storageLimit,
+    extraStorage: data.extraStorage,
+    storageUse: data.storageUse,
+    unit: data.unit,
+    contractAddress: data.contractAddress,
+  };
 };
 
 async function use(req: CustomRequest, res: Response) {
@@ -55,6 +87,7 @@ async function use(req: CustomRequest, res: Response) {
   if (
     !contractAddresses ||
     contractAddresses.length === 0 ||
+    contractAddresses.length > 2 ||
     !invokerAddress ||
     !chainId
   ) {
@@ -74,9 +107,17 @@ async function use(req: CustomRequest, res: Response) {
   };
 
   for (const contractAddress of contractAddresses) {
-    const isLegacy = await isLegacyContract(contractAddress as Hex);
+    const isLegacy =
+      contractAddresses.length === 1
+        ? false
+        : await isLegacyContract(contractAddress as Hex);
     if (isLegacy) {
-      const legacyStorage = await getLegacyStorageUse({ contractAddress });
+      const legacyStorage = await getLegacyStorageUse({
+        contractAddress,
+        allContracts: contractAddresses,
+        invokerAddress,
+      });
+
       if (legacyStorage) {
         data.storageLimit += Number(legacyStorage.storageLimit);
         data.extraStorage += Number(legacyStorage.extraStorage);
