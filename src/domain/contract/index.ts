@@ -15,7 +15,6 @@ const getCollaboratorKeys = async (
     const cacheKey = `collaboratorKeys:${collaboratorAddress}:${portalAddress}`;
     const cachedResult = await cache.get(cacheKey);
     if (cachedResult) {
-      console.log("did: cached result");
       return cachedResult;
     }
 
@@ -75,6 +74,11 @@ const getFileIdByAppFileId = async (appFileId: string, portalAddress: Hex) => {
 };
 
 const isLegacyContract = async (contractAddress: Hex) => {
+  const cacheKey = `isLegacyContract:${contractAddress}`;
+  const cachedResult = await cache.get(cacheKey);
+  if (cachedResult) {
+    return cachedResult;
+  }
   const result = await publicClient.readContract({
     address: config.LEGACY_PORTAL_REGISTRY_ADDRESS as Hex,
     abi: [
@@ -101,7 +105,11 @@ const isLegacyContract = async (contractAddress: Hex) => {
     functionName: "ownerOf",
     args: [contractAddress],
   });
-  return result !== zeroAddress;
+
+  const actualResult = result.toLowerCase() !== zeroAddress.toLowerCase();
+  if (actualResult) cache.set(cacheKey, actualResult, CACHE_TTL);
+
+  return actualResult;
 };
 
 export {

@@ -9,6 +9,7 @@ export const canCheckLimitUse = async (
 ) => {
   const invokerAddress = req.invokerAddress;
   const contractAddress = req.contractAddress;
+
   if (req.isAuthenticated) {
     next();
   } else {

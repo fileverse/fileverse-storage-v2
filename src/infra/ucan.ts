@@ -2,6 +2,7 @@ import { config } from "../config";
 import {
   getCollaboratorKeys,
   getLegacyCollaboratorKeys,
+  isLegacyContract,
 } from "../domain/contract";
 import { v4 as uuidv4 } from "uuid";
 import * as ucans from "ucans";
@@ -28,7 +29,11 @@ async function validateContractAddress(
   };
 
   for (const contractAddress of contractAddresses) {
-    invokerDid = await getCollaboratorKeys(invokerAddress, contractAddress);
+    const isLegacy = await isLegacyContract(contractAddress);
+
+    invokerDid = isLegacy
+      ? await getLegacyCollaboratorKeys(invokerAddress, contractAddress)
+      : await getCollaboratorKeys(invokerAddress, contractAddress);
 
     if (!invokerDid) {
       invokerDid = await getLegacyCollaboratorKeys(
@@ -54,6 +59,7 @@ async function validateContractAddress(
             },
           ],
         });
+
         result.ok = verificationResult.ok;
         result.actualContractAddress = contractAddress;
       } catch (err) {

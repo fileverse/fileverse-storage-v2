@@ -107,10 +107,7 @@ async function use(req: CustomRequest, res: Response) {
   };
 
   for (const contractAddress of contractAddresses) {
-    const isLegacy =
-      contractAddresses.length === 1
-        ? false
-        : await isLegacyContract(contractAddress as Hex);
+    const isLegacy = await isLegacyContract(contractAddress as Hex);
     if (isLegacy) {
       const legacyStorage = await getLegacyStorageUse({
         contractAddress,
