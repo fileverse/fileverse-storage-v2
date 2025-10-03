@@ -24,6 +24,7 @@
     "@filebase/sdk": "^1.0.4",
     "@pinata/sdk": "^1.1.26",
     "@privy-io/server-auth": "^1.26.1",
+    "@semaphore-protocol/group": "^4.13.1",
     "agenda": "^5.0.0",
     "aws-sdk": "^2.1209.0",
     "axios": "^1.9.0",
