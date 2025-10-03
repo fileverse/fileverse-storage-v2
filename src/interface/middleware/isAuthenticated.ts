@@ -23,5 +23,3 @@ export const isAuthenticated = async (
     });
   }
 };
-
-module.exports = isAuthenticated;

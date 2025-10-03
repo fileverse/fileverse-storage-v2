@@ -16,7 +16,6 @@ export const expressErrorHandler = (
   next: NextFunction
 ) => {
   console.log("error", err.details);
-
   const errorMessage = `Message: ${err.message}\nError Code: ${
     err.statusCode || err.code
   }`;
