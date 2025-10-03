@@ -3,6 +3,7 @@ import { asyncHandler, asyncHandlerArray } from "../../infra/asyncHandler";
 import claim from "./claim";
 import redeem from "./redeem";
 import list from "./list";
+import group from "./group";
 
 // middlewares
 import {
@@ -12,8 +13,9 @@ import {
 
 const router = Router();
 
-router.post("/claim", asyncHandlerArray(claim));
+router.post("/claim", asyncHandler(isAuthenticated), asyncHandlerArray(claim));
 router.post("/redeem", asyncHandler(isAuthenticated), asyncHandlerArray(redeem));
 router.get("/list", asyncHandler(isAuthenticated), asyncHandlerArray(list));
+router.get("/group", asyncHandler(isAuthenticated), asyncHandlerArray(group));
 
 export default router;
