@@ -12,8 +12,8 @@ import {
 
 const router = Router();
 
-router.put("/claim", asyncHandlerArray(claim));
-router.put("/redeem", asyncHandler(isAuthenticated), asyncHandlerArray(redeem));
-router.put("/list", asyncHandler(isAuthenticated), asyncHandlerArray(list));
+router.post("/claim", asyncHandlerArray(claim));
+router.post("/redeem", asyncHandler(isAuthenticated), asyncHandlerArray(redeem));
+router.get("/list", asyncHandler(isAuthenticated), asyncHandlerArray(list));
 
 export default router;

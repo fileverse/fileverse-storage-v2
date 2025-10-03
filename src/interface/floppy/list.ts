@@ -2,8 +2,8 @@
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
-
 import { Response } from "express";
+
 const listValidation = {
   headers: Joi.object({
     contract: Joi.string().required(),
@@ -13,7 +13,7 @@ const listValidation = {
 };
 
 async function listHandler(req: CustomRequest, res: Response) {
-  const { contractAddress, invokerAddress, chainId, identityCommitment, proof } = req.body;
+  const { contractAddress, invokerAddress, chainId } = req;
   console.log({ contractAddress, invokerAddress, chainId });
   if (!contractAddress || !invokerAddress || !chainId) {
     return throwError({

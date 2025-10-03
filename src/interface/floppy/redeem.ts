@@ -12,7 +12,14 @@ const redeemValidation = {
   }).unknown(true),
   body: Joi.object({
     shortCode: Joi.string().required(),
-    proof: Joi.string().required(),
+    proof: Joi.object({
+      merkleTreeDepth: Joi.number().required(),
+      merkleTreeRoot: Joi.string().required(),
+      nullifier: Joi.string().required(),
+      message: Joi.string().required(),
+      scope: Joi.string().required(),
+      points: Joi.array().items(Joi.string().required()).required()
+    }).required(),
   }),
 };
 
