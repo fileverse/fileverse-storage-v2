@@ -16,6 +16,6 @@ const router = Router();
 router.post("/claim", asyncHandler(isAuthenticated), asyncHandlerArray(claim));
 router.post("/redeem", asyncHandler(isAuthenticated), asyncHandlerArray(redeem));
 router.get("/list", asyncHandler(isAuthenticated), asyncHandlerArray(list));
-router.get("/group", asyncHandler(isAuthenticated), asyncHandlerArray(group));
+router.post("/group", asyncHandler(isAuthenticated), asyncHandlerArray(group));
 
 export default router;
