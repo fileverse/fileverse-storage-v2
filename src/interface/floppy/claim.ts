@@ -1,4 +1,4 @@
-// import { claim } from "../../domain/floppy";
+import { claim } from "../../domain/floppy";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
@@ -11,7 +11,7 @@ const claimValidation = {
   }),
 };
 
-async function claim(req: CustomRequest, res: Response) {
+async function claimHandler(req: CustomRequest, res: Response) {
   const { identityCommitment, shortCode } = req.body;
   if (!identityCommitment || !shortCode) {
     return throwError({
@@ -20,9 +20,8 @@ async function claim(req: CustomRequest, res: Response) {
       req,
     });
   }
-  // const data = await claim({ identityCommitment });
-  // res.json(data);
-  return res.json({ success: true, message: "Floppy claimed" });
+  const data = await claim({ identityCommitment, shortCode });
+  return res.json({ success: !!data, data });
 }
 
-export default [validate(claimValidation), claim];
+export default [validate(claimValidation), claimHandler];
