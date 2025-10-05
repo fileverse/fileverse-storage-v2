@@ -1,4 +1,4 @@
-// import { redeem } from "../../domain/floppy";
+import { redeem } from "../../domain/floppy";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
@@ -23,7 +23,8 @@ const redeemValidation = {
   }),
 };
 
-async function redeem(req: CustomRequest, res: Response) {
+async function redeemHandler(req: CustomRequest, res: Response) {
+  const { contractAddress, invokerAddress, chainId } = req;
   const { shortCode, proof  } = req.body;
   if (!shortCode || !proof) {
     return throwError({
@@ -32,9 +33,8 @@ async function redeem(req: CustomRequest, res: Response) {
       req,
     });
   }
-  // const data = await redeem({ shortCode, proof });
-  // res.json(data);
-  return res.json({ success: true, message: "Floppy redeemed" });
+  const data = await redeem({ contractAddress, invokerAddress, chainId, shortCode, proof });
+  return res.json({ success: !!data, data });
 }
 
-export default [validate(redeemValidation), redeem];
+export default [validate(redeemValidation), redeemHandler];

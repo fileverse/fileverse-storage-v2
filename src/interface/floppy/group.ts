@@ -1,4 +1,4 @@
-// import { group } from "../../domain/floppy";
+import { group } from "../../domain/floppy";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
@@ -10,7 +10,7 @@ const groupValidation = {
   }),
 };
 
-async function group(req: CustomRequest, res: Response) {
+async function groupHandler(req: CustomRequest, res: Response) {
   const { shortCode } = req.body;
   if (!shortCode) {
     return throwError({
@@ -19,15 +19,10 @@ async function group(req: CustomRequest, res: Response) {
       req,
     });
   }
-  // const data = await claim({ identityCommitment });
-  // res.json(data);
+  const data = await group({ shortCode });
   return res.json({
-    success: true, group: {
-      shortCode: "FLV",
-      sgid: "1",
-      members: [],
-    }
+    success: !!data, data
   });
 }
 
-export default [validate(groupValidation), group];
+export default [validate(groupValidation), groupHandler];
