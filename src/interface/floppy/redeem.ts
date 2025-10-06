@@ -24,7 +24,7 @@ const redeemValidation = {
 };
 
 async function redeemHandler(req: CustomRequest, res: Response) {
-  const { contractAddress, invokerAddress, chainId } = req;
+  const { contractAddress } = req;
   const { shortCode, proof  } = req.body;
   if (!shortCode || !proof) {
     return throwError({
@@ -33,7 +33,7 @@ async function redeemHandler(req: CustomRequest, res: Response) {
       req,
     });
   }
-  const data = await redeem({ contractAddress, invokerAddress, chainId, shortCode, proof });
+  const data = await redeem({ contractAddress, shortCode, proof });
   return res.json({ success: !!data, data });
 }
 

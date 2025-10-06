@@ -10,6 +10,7 @@ const FloppySchema = new Schema({
   metadataURI: { type: String, index: true, required: true },
   diskSpace: { type: Number, index: true, required: true },
   members: { type: [String], index: true, default: [] },
+  nullifiers: { type: [String], index: true, default: [] },
   offchain: { type: Boolean, default: false },
   networkName: {
     type: String,
