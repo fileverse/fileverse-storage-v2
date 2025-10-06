@@ -27,6 +27,7 @@
     "@semaphore-protocol/group": "^4.13.1",
     "@semaphore-protocol/identity": "^4.13.1",
     "@semaphore-protocol/proof": "^4.13.1",
+    "@semaphore-protocol/utils": "^4.13.1",
     "agenda": "^5.0.0",
     "aws-sdk": "^2.1209.0",
     "axios": "^1.9.0",
