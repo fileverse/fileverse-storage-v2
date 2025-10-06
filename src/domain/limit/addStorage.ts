@@ -36,6 +36,7 @@ export const addStorage = async ({
     { new: true }
   );
 
+  console.log({ resp });
   if (!resp) {
     return throwError({
       code: 404,
