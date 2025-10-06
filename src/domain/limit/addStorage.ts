@@ -18,7 +18,6 @@ export const addStorage = async ({
       message: "Storage already added for this floppy",
     });
   }
-  console.log({ limit });
 
   const resp = await Limit.findOneAndUpdate(
     { contractAddress },
@@ -33,7 +32,7 @@ export const addStorage = async ({
         },
       },
     },
-    { new: true }
+    { new: true, upsert: true }
   );
 
   console.log({ resp });
