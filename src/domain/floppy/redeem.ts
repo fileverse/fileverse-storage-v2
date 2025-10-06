@@ -47,6 +47,11 @@ export const redeem = async ({
     // add nullifier to floppy
     floppy.nullifiers.push(proof.nullifier);
     await floppy.save();
+  } else {
+    return throwError({
+      code: 400,
+      message: "Invalid message",
+    });
   }
   return true;
 };
