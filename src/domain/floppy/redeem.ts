@@ -44,7 +44,7 @@ export const redeem = async ({
     floppy.nullifiers.push(proof.nullifier);
     await floppy.save();
     // add storage to corresponding portal
-    await addStorage({ contractAddress: contractAddress as string, diskSpace: floppy.diskSpace });
+    await addStorage({ contractAddress: contractAddress as string, diskSpace: floppy.diskSpace, shortCode });
   }
   return true;
 };
