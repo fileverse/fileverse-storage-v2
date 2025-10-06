@@ -10,12 +10,15 @@ const listValidation = {
     invoker: Joi.string().required(),
     chain: Joi.string().required(),
   }).unknown(true),
+  query: Joi.object({
+    identityCommitment: Joi.string().optional(),
+  }),
 };
 
 async function listHandler(req: CustomRequest, res: Response) {
-  const { contractAddress, invokerAddress, chainId } = req;
-  console.log({ contractAddress, invokerAddress, chainId });
-  if (!contractAddress || !invokerAddress || !chainId) {
+  const { contractAddress } = req;
+  const { identityCommitment } = req.query;
+  if (!contractAddress) {
     return throwError({
       code: 400,
       message: "Invalid request",
@@ -23,8 +26,7 @@ async function listHandler(req: CustomRequest, res: Response) {
     });
   }
   try {
-    const identityCommitment = '0x1234567890';
-    const dataList = await list({ identityCommitment });
+    const dataList = await list({ identityCommitment: identityCommitment as string, contractAddress: contractAddress as string });
     return res.json({ success: true, floppy: dataList });
   } catch (error: any) {
     return res.status(400).json({ success: false, message: error.message });
