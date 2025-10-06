@@ -14,7 +14,7 @@ const extendValidation = {
 
 async function extendHandler(req: CustomRequest, res: Response) {
   const { contractAddress, invokerAddress, chainId } = req;
-  console.log({ contractAddress, invokerAddress, chainId });
+
   if (!contractAddress || !invokerAddress || !chainId) {
     return throwError({
       code: 400,
