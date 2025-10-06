@@ -1,6 +1,7 @@
 import { Floppy } from "../../infra/database/models";
 import { throwError } from "../../infra/errorHandler";
 import { verifyProof } from "@semaphore-protocol/proof";
+import { decodeMessage } from "@semaphore-protocol/utils";
 import { addStorage } from "../limit";
 
 export const redeem = async ({
@@ -39,12 +40,13 @@ export const redeem = async ({
       message: "Invalid proof",
     });
   }
-  if(proof.message === `Redeem ${shortCode}`) {
+  const decodedMessage = decodeMessage(proof.message);
+  if(decodedMessage === `Redeem ${shortCode}`) {
+    // add storage to corresponding portal
+    await addStorage({ contractAddress: contractAddress as string, diskSpace: floppy.diskSpace, shortCode });
     // add nullifier to floppy
     floppy.nullifiers.push(proof.nullifier);
     await floppy.save();
-    // add storage to corresponding portal
-    await addStorage({ contractAddress: contractAddress as string, diskSpace: floppy.diskSpace, shortCode });
   }
   return true;
 };

@@ -10,31 +10,23 @@ export const addStorage = async ({
   diskSpace: number;
   shortCode: string;
 }) => {
+  console.log({ contractAddress, diskSpace, shortCode });
   const limit = await Limit.findOne({ contractAddress });
-
-  if (
-    limit &&
-    limit.extendableStorage &&
-    Number(limit.extendableStorage) <= 0
-  ) {
-    return throwError({
-      code: 400,
-      message: "No storage available to extend",
-    });
-  }
-
-  if (limit?.redeemMap && limit.redeemMap[shortCode]) {
+  if (limit?.redeemMap && limit?.redeemMap[shortCode]) {
     return throwError({
       code: 400,
       message: "Storage already added for this floppy",
     });
   }
+  console.log({ limit });
 
   const resp = await Limit.findOneAndUpdate(
     { contractAddress },
     {
       $inc: {
         extraStorage: diskSpace,
+      },
+      $set: {
         redeemMap: {
           ...limit?.redeemMap,
           [shortCode]: diskSpace,
