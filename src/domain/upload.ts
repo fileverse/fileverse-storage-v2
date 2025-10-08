@@ -51,10 +51,10 @@ export const upload = async (params: IUploadParams) => {
     ipfsUrl: ipfsFile?.ipfsUrl,
     ipfsHash: ipfsFile?.ipfsHash,
     ipfsStorage: ipfsFile?.ipfsStorage,
-    // cachedUrl: cachedFile?.cachedUrl,
     fileSize: ipfsFile?.pinSize,
     mimetype,
     appFileId,
     contractAddress,
+    ipfsType,
   };
 };
