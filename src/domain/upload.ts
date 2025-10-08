@@ -14,7 +14,6 @@ interface IUploadParams {
 }
 
 export const upload = async (params: IUploadParams) => {
-  // Extract file metadata
   const {
     appFileId,
     sourceApp,
@@ -26,10 +25,7 @@ export const upload = async (params: IUploadParams) => {
   } = params;
   const { name, mimetype, data } = file;
 
-  // Create a readable stream from file data
-  const stream = Readable.from(data);
-
-  // Set path property using Object.assign since path is not a standard Readable property
+  const stream = Readable.from(data, { objectMode: false });
   Object.assign(stream, { path: name });
 
   const ipfsFile = await uploadToPinata(stream, { name });
@@ -46,7 +42,6 @@ export const upload = async (params: IUploadParams) => {
     ipfsType,
   });
 
-  // Return uploaded file metadata
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,
     ipfsHash: ipfsFile?.ipfsHash,
@@ -55,6 +50,25 @@ export const upload = async (params: IUploadParams) => {
     mimetype,
     appFileId,
     contractAddress,
+    ipfsType,
+  };
+};
+
+export const uploadOnly = async (params: IUploadParams) => {
+  const { file, ipfsType } = params;
+  const { name, mimetype, data } = file;
+
+  const stream = Readable.from(data, { objectMode: false });
+  Object.assign(stream, { path: name });
+
+  const ipfsFile = await uploadToPinata(stream, { name });
+
+  return {
+    ipfsUrl: ipfsFile?.ipfsUrl,
+    ipfsHash: ipfsFile?.ipfsHash,
+    ipfsStorage: ipfsFile?.ipfsStorage,
+    fileSize: ipfsFile?.pinSize,
+    mimetype,
     ipfsType,
   };
 };

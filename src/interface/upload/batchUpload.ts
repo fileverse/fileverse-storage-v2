@@ -1,6 +1,7 @@
 import { Response } from "express";
 
-import { upload } from "../../domain";
+import { uploadOnly } from "../../domain/upload";
+import { create } from "../../domain/file";
 import { CustomRequest, FileIPFSType } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
@@ -26,7 +27,6 @@ const getIPFSTypeFromFileName = (fileName: string) => {
 
 const batchUploadFn = async (req: CustomRequest, res: Response) => {
   const { contractAddress, invokerAddress } = req;
-
   const files = Array.isArray(req.files?.files) ? req.files?.files : [];
   const { appFileId, sourceApp } = req.body;
 
@@ -38,31 +38,44 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
     });
   }
 
-  const uploadPrmomises: Promise<any>[] = [];
-  files.forEach((file) => {
-    if (file) {
-      const fileName = file.name;
-      uploadPrmomises.push(
-        upload({
-          file,
-          appFileId,
-          sourceApp,
-          ipfsType: getIPFSTypeFromFileName(fileName),
-          contractAddress,
-          invokerAddress,
-          tags: [],
-        })
-      );
-    }
-  });
+  const uploadPromises = files.map((file) =>
+    uploadOnly({
+      file,
+      appFileId,
+      sourceApp,
+      ipfsType: getIPFSTypeFromFileName(file.name),
+      contractAddress,
+      invokerAddress,
+      tags: [],
+    })
+  );
+  console.time("pinata upload");
+  const uploadedFiles = await Promise.all(uploadPromises);
+  console.timeEnd("pinata upload");
 
-  const createdFiles = await Promise.all(uploadPrmomises);
+  const dbPromises = uploadedFiles.map((ipfsFile) =>
+    create({
+      appFileId,
+      ipfsHash: ipfsFile.ipfsHash,
+      gatewayUrl: ipfsFile.ipfsUrl,
+      contractAddress,
+      invokerAddress,
+      fileSize: ipfsFile.fileSize,
+      tags: [],
+      sourceApp,
+      ipfsType: ipfsFile.ipfsType,
+    })
+  );
+  console.time("db create");
+  await Promise.all(dbPromises);
+  console.timeEnd("db create");
   const response: IBatchUploadResponse = {
     gateIpfsHash: "",
     contentIpfsHash: "",
     metadataIpfsHash: "",
   };
-  for (const file of createdFiles) {
+
+  for (const file of uploadedFiles) {
     if (file.ipfsType === FileIPFSType.GATE) {
       response.gateIpfsHash = file.ipfsHash;
     } else if (file.ipfsType === FileIPFSType.CONTENT) {
