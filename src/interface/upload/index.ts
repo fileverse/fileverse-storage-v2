@@ -12,6 +12,7 @@ import uploadPublic from "./publicUpload";
 
 // middlewares
 import { canUpload } from "../middleware";
+import batchUpload from "./batchUpload";
 
 router.post(
   "/",
@@ -23,5 +24,12 @@ router.post(
 router.post("/comment", fileUpload(), asyncHandlerArray(uploadComment));
 
 router.post("/public", fileUpload(), asyncHandlerArray(uploadPublic));
+
+router.post(
+  "/batch",
+  asyncHandler(canUpload),
+  fileUpload(),
+  asyncHandlerArray(batchUpload)
+);
 
 export default router;
