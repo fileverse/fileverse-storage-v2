@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
 
 dotenv.config();
-const config = process.env;
+
+const config: Record<string, string> = process.env as Record<string, string>;
 
 config.SERVICE_NAME = config.SERVICE_NAME || "storage-service";
 config.ALLOWED_ORIGINS =

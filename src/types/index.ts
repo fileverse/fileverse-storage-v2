@@ -1,5 +1,19 @@
 import { Request } from "express";
-
+import type { SmartAccountClient } from "permissionless";
+import { createPimlicoClient } from "permissionless/clients/pimlico";
+import type {
+  Chain,
+  RpcSchema,
+  Client,
+  Transport,
+  Hex,
+  EncodeDeployDataReturnType,
+  Account,
+} from "viem";
+import {
+  SmartAccount,
+  WaitForUserOperationReceiptReturnType,
+} from "viem/account-abstraction";
 export interface CustomRequest extends Request {
   requestId?: string;
   isAuthenticated?: boolean;
@@ -47,4 +61,35 @@ export interface ICreateCommunityFilesParams {
   dsheetId: string;
   userHash: string;
   portalAddress: string;
+}
+
+export type TSmartAccountClient = SmartAccountClient<
+  Transport,
+  Chain,
+  SmartAccount,
+  Client,
+  RpcSchema
+>;
+
+export interface IExecuteUserOperationRequest {
+  contractAddress: Hex;
+  data: EncodeDeployDataReturnType;
+}
+
+export interface IAgentClient {
+  pimlicoClient: ReturnType<typeof createPimlicoClient>;
+  initializeAgentClient: () => Promise<void>;
+  getAgentAccount: () => Account;
+  getAgentAddress: () => Hex;
+  getSmartAccountAgent: () => TSmartAccountClient;
+  sendUserOperation: (
+    request: IExecuteUserOperationRequest | IExecuteUserOperationRequest[],
+    customGasLimit?: number
+  ) => Promise<Hex>;
+  executeUserOperationRequest: (
+    request: IExecuteUserOperationRequest | IExecuteUserOperationRequest[],
+    timeout: number,
+    customGasLimit?: number
+  ) => Promise<WaitForUserOperationReceiptReturnType>;
+  getNonce: () => bigint;
 }

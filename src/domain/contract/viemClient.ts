@@ -11,7 +11,7 @@ const CHAIN_MAP = {
   gnosis: gnosis,
 };
 
-const chain = CHAIN_MAP[network];
+export const chain = CHAIN_MAP[network];
 
 export const publicClient = createPublicClient({
   chain: chain,
