@@ -3,3 +3,4 @@ export { list } from "./list";
 export { claim } from "./claim";
 export { group } from "./group";
 export { claimOnchain } from "./claim-onchain";
+export { grant } from "./grant";

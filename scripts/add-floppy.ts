@@ -4,7 +4,6 @@ import { config } from "../src/config";
 import { FLOPPY_CONTRACT_ABI } from "../src/data/floppyContractAbi";
 import { encodeFunctionData, Hex, parseEventLogs } from "viem";
 import { publicClient } from "../src/domain/contract/viemClient";
-import { Identity } from "@semaphore-protocol/identity";
 
 const { FLOPPY_CONTRACT_ADDRESS } = config as { FLOPPY_CONTRACT_ADDRESS: Hex };
 
@@ -18,17 +17,17 @@ interface IFloppy {
   metadataURI: string;
 }
 
-export const addFloppy = async () => {
-  await AgentInstance.initializeAgentClient();
+const SHORT_CODE = "oxTestThree";
 
+const addFloppy = async () => {
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "addFloppy",
     args: [
-      "oxTestOne",
+      SHORT_CODE,
       1000,
       1000,
-      "ipfs://somecid",
+      "ipfs://bafkreic3h7bfs4ifq7kz6wot4b7qyqo3uq3plp4pbf37flg2up5joxkfwq",
       ["0x060910aE5eDD193990760e76001c8B48e9C6EBB1"],
     ],
   });
@@ -53,22 +52,18 @@ export const addFloppy = async () => {
   return parsedLog[0];
 };
 
-const grantFloppy = async () => {
-  await AgentInstance.initializeAgentClient();
-
+const addOperator = async () => {
   const { id } = (await publicClient.readContract({
     address: FLOPPY_CONTRACT_ADDRESS,
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "getFloppyByShortCode",
-    args: ["oxTestOne"],
+    args: [SHORT_CODE],
   })) as IFloppy;
 
-  const { commitment, privateKey } = new Identity();
-  console.log("privateKey", privateKey);
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
-    functionName: "grantFloppy",
-    args: [id, [commitment]],
+    functionName: "addOperator",
+    args: [id, "0x060910aE5eDD193990760e76001c8B48e9C6EBB1"],
   });
   const userOp = await AgentInstance.executeUserOperationRequest(
     {
@@ -79,17 +74,13 @@ const grantFloppy = async () => {
   );
 
   console.log(userOp);
-
-  const parsedLog = parseEventLogs({
-    abi: FLOPPY_CONTRACT_ABI,
-    logs: userOp.receipt.logs,
-    eventName: "FloppyGranted",
-  });
-
-  console.log(parsedLog[0]);
-  return parsedLog[0];
+  return userOp;
 };
 
-grantFloppy().then(() => {
-  process.exit(0);
+AgentInstance.initializeAgentClient().then(() => {
+  addFloppy().then(() => {
+    addOperator().then(() => {
+      process.exit(0);
+    });
+  });
 });

@@ -31,11 +31,16 @@ export const claimOnchain = async ({
       message: "Floppy not found",
     });
   }
+  const { merkleTreeDepth, merkleTreeRoot, nullifier, message, scope, points } =
+    proof;
 
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "claimFloppy",
-    args: [id, proof],
+    args: [
+      id,
+      [merkleTreeDepth, merkleTreeRoot, nullifier, message, scope, points],
+    ],
   });
 
   const userOp = await AgentInstance.executeUserOperationRequest(

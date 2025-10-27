@@ -5,6 +5,7 @@ import redeem from "./redeem";
 import list from "./list";
 import group from "./group";
 import claimOnchain from "./claim-onchain";
+import grant from "./grant";
 // middlewares
 import { isAuthenticated } from "../middleware";
 
@@ -23,5 +24,7 @@ router.post(
   asyncHandler(isAuthenticated),
   asyncHandlerArray(claimOnchain)
 );
+
+router.post("/grant", asyncHandlerArray(grant));
 
 export default router;
