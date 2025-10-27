@@ -93,3 +93,13 @@ export interface IAgentClient {
   ) => Promise<WaitForUserOperationReceiptReturnType>;
   getNonce: () => bigint;
 }
+
+export interface IOnChainFloppy {
+  id: bigint;
+  shortCode: string;
+  groupId: bigint;
+  maxCount: bigint;
+  diskSpace: bigint;
+  grantCount: bigint;
+  metadataURI: string;
+}
