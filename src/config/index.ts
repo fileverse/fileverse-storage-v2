@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const config: Record<string, string> = process.env as Record<string, string>;
+const config = process.env;
 
 config.SERVICE_NAME = config.SERVICE_NAME || "storage-service";
 config.ALLOWED_ORIGINS =
