@@ -4,6 +4,7 @@ import { config } from "../src/config";
 import { FLOPPY_CONTRACT_ABI } from "../src/data/floppyContractAbi";
 import { encodeFunctionData, Hex, parseEventLogs } from "viem";
 import { publicClient } from "../src/domain/contract/viemClient";
+import { Floppy } from "../src/infra/database/models";
 
 const { FLOPPY_CONTRACT_ADDRESS } = config as { FLOPPY_CONTRACT_ADDRESS: Hex };
 
@@ -17,14 +18,14 @@ interface IFloppy {
   metadataURI: string;
 }
 
-const SHORT_CODE = "oxTestThree";
+const SHORT_CODE = "0xFloppy-";
 
-const addFloppy = async () => {
+const addFloppy = async (shortCode: string) => {
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "addFloppy",
     args: [
-      SHORT_CODE,
+      shortCode,
       1000,
       1000,
       "ipfs://bafkreic3h7bfs4ifq7kz6wot4b7qyqo3uq3plp4pbf37flg2up5joxkfwq",
@@ -52,18 +53,18 @@ const addFloppy = async () => {
   return parsedLog[0];
 };
 
-const addOperator = async () => {
-  const { id } = (await publicClient.readContract({
+const addOperator = async (shortCode: string) => {
+  const floppy = (await publicClient.readContract({
     address: FLOPPY_CONTRACT_ADDRESS,
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "getFloppyByShortCode",
-    args: [SHORT_CODE],
+    args: [shortCode],
   })) as IFloppy;
 
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "addOperator",
-    args: [id, "0x060910aE5eDD193990760e76001c8B48e9C6EBB1"],
+    args: [floppy.id, "0x060910aE5eDD193990760e76001c8B48e9C6EBB1"],
   });
   const userOp = await AgentInstance.executeUserOperationRequest(
     {
@@ -74,13 +75,36 @@ const addOperator = async () => {
   );
 
   console.log(userOp);
-  return userOp;
+  return floppy;
 };
 
-AgentInstance.initializeAgentClient().then(() => {
-  addFloppy().then(() => {
-    addOperator().then(() => {
-      process.exit(0);
+const main = async () => {
+  await AgentInstance.initializeAgentClient();
+  for (let i = 1; i <= 10; i++) {
+    const shortCode = `${SHORT_CODE}${i}`;
+    await addFloppy(shortCode);
+    const floppy = await addOperator(shortCode);
+    const dbFloppy = new Floppy({
+      shortCode,
+      description: `Test floppy ${i}`,
+      diskSpace: Number(floppy.diskSpace),
+      img: "https://s3.eu-west-2.amazonaws.com/assets.fileverse.io/dapp/public/Oxford+floppy+disk+digital+version+1.jpg",
+      metadataURI: floppy.metadataURI,
+      members: [],
+      nullifiers: [],
+      offchain: false,
+      networkName: config.NETWORK_NAME,
+      sgid: floppy.groupId.toString(),
+      name: `Test floppy ${i}`,
+      onChainFloppyId: floppy.id.toString(),
     });
-  });
+    await dbFloppy.save();
+
+    console.log(`Floppy ${shortCode} added to database`);
+    console.log(dbFloppy);
+  }
+};
+
+main().then(() => {
+  process.exit(0);
 });

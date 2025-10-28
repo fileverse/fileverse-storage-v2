@@ -7,7 +7,7 @@ import { throwError } from "../../infra/errorHandler";
 import { AgentInstance } from "../../infra/smart-agent";
 import { encodeFunctionData, Hex } from "viem";
 import { addStorage } from "../limit/addStorage";
-
+// TODO: Remove this function and use the floppyManager instead
 export const claimOnchain = async ({
   proof,
   shortCode,

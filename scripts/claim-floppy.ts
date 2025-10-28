@@ -1,15 +1,17 @@
 import { config } from "../src/config";
 import { FLOPPY_CONTRACT_ABI } from "../src/data/floppyContractAbi";
-import { Hex, toHex } from "viem";
+import { Hex } from "viem";
 import { publicClient } from "../src/domain/contract/viemClient";
 
 import { Identity } from "@semaphore-protocol/identity";
 import { generateProof } from "@semaphore-protocol/proof";
-import { SemaphoreViem } from "@semaphore-protocol/data";
+import { SemaphoreSubgraph } from "@semaphore-protocol/data";
 import { Group } from "@semaphore-protocol/group";
 
 // NOTE: Subgraph api is not working as expected
-// const semaphoreSubgraph = new SemaphoreSubgraph("sepolia");
+const semaphoreSubgraph = new SemaphoreSubgraph(
+  config.SEMAPHORE_SUBGRAPH_URL as string
+);
 
 const { FLOPPY_CONTRACT_ADDRESS } = config as { FLOPPY_CONTRACT_ADDRESS: Hex };
 
@@ -27,18 +29,16 @@ const DUMMY_SEED = "DumDummyTwo";
 
 const SHORT_CODE = "oxTestThree";
 
-const SEMAPHORE_CONTRACT_ADDRESS = "0x8A1fd199516489B0Fb7153EB5f075cDAC83c693D"; // sepolia
-
 const grantFloppy = async () => {
   const { commitment } = new Identity(DUMMY_SEED);
-  console.log(toHex(commitment));
+
   const response = await fetch("http://localhost:8001/floppy/grant", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      commitment: toHex(commitment),
+      commitment: commitment.toString(),
       shortCode: SHORT_CODE,
     }),
   });
@@ -54,14 +54,7 @@ const claimFloppy = async () => {
     args: [SHORT_CODE],
   })) as IFloppy;
 
-  const semaphoreViemOnSepolia = new SemaphoreViem("sepolia", {
-    address: SEMAPHORE_CONTRACT_ADDRESS,
-    startBlock: 9504370n, // start block if exceeds ten thousand blocks this breaks,create a new floppy and update the start block
-    //   @ts-ignore
-    publicClient: publicClient,
-  });
-
-  const groupMembers = await semaphoreViemOnSepolia.getGroupMembers(
+  const groupMembers = await semaphoreSubgraph.getGroupMembers(
     groupId.toString()
   );
 

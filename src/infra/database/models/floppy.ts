@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import { config } from "../../../config";
+import { DBFloppy } from "../../../types";
 
 const FloppySchema = new Schema({
   shortCode: { type: String, index: true, required: true },
@@ -22,6 +23,7 @@ const FloppySchema = new Schema({
     required: true,
     default: Date.now,
   },
+  onChainFloppyId: { type: Number, index: true, required: false },
 });
 
 FloppySchema.pre("save", function (next) {
@@ -29,6 +31,6 @@ FloppySchema.pre("save", function (next) {
   next();
 });
 
-const Floppy = model("floppys", FloppySchema);
+const Floppy = model<DBFloppy>("floppys", FloppySchema);
 
 export default Floppy;

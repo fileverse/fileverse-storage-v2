@@ -14,6 +14,7 @@ import {
   SmartAccount,
   WaitForUserOperationReceiptReturnType,
 } from "viem/account-abstraction";
+import { Document, Types } from "mongoose";
 export interface CustomRequest extends Request {
   requestId?: string;
   isAuthenticated?: boolean;
@@ -103,3 +104,27 @@ export interface IOnChainFloppy {
   grantCount: bigint;
   metadataURI: string;
 }
+
+export interface DBFloppy {
+  shortCode: string;
+  sgid: string;
+  name: string;
+  description: string;
+  img: string;
+  metadataURI: string;
+  diskSpace: number;
+  members: string[];
+  nullifiers: string[];
+  offchain: boolean;
+  networkName: string;
+  timeStamp: number;
+  onChainFloppyId?: number | undefined;
+}
+
+export type DBFloppyDocument = Document<unknown, any, DBFloppy> &
+  Omit<
+    DBFloppy & {
+      _id: Types.ObjectId;
+    },
+    never
+  >;

@@ -6,7 +6,8 @@ import { AgentInstance } from "../../infra/smart-agent";
 import { throwError } from "../../infra/errorHandler";
 import { IOnChainFloppy } from "../../types";
 import { hexToBigInt } from "viem";
-
+//
+// TODO: Remove this function and use the floppyManager instead
 export const grant = async ({
   commitment,
   shortCode,

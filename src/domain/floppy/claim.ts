@@ -1,5 +1,4 @@
-import { Floppy } from "../../infra/database/models";
-import { throwError } from "../../infra/errorHandler";
+import { FloppyManager } from "./floppyManager";
 
 export const claim = async ({
   shortCode,
@@ -8,14 +7,6 @@ export const claim = async ({
   shortCode: string;
   identityCommitment: string;
 }) => {
-  const floppy = await Floppy.findOne({ shortCode });
-  if (!floppy) {
-    return throwError({
-      code: 404,
-      message: "Floppy not found",
-    });
-  }
-  floppy.members.push(identityCommitment);
-  await floppy.save();
-  return true;
+  const floppyManager = new FloppyManager(shortCode);
+  return floppyManager.claimFloppy(identityCommitment);
 };
