@@ -2,7 +2,7 @@ import { getStorageStatus } from "../../domain/limit";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
-import { Response } from "express";
+import { Response, Request } from "express";
 
 const checkValidation = {
   headers: Joi.object({
