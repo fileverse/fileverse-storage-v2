@@ -41,8 +41,6 @@ const addFloppy = async (shortCode: string) => {
     1000000
   );
 
-  console.log(userOp);
-
   const parsedLog = parseEventLogs({
     abi: FLOPPY_CONTRACT_ABI,
     logs: userOp.receipt.logs,
@@ -74,7 +72,10 @@ const addOperator = async (shortCode: string) => {
     1000000
   );
 
-  console.log(userOp);
+  if (!userOp.success) {
+    console.error(userOp);
+    throw new Error("Failed to add operator");
+  }
   return floppy;
 };
 
@@ -101,7 +102,6 @@ const main = async () => {
     await dbFloppy.save();
 
     console.log(`Floppy ${shortCode} added to database`);
-    console.log(dbFloppy);
   }
 };
 
