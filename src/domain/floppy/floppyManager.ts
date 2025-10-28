@@ -3,13 +3,14 @@ import { throwError } from "../../infra/errorHandler";
 import { SemaphoreSubgraph } from "@semaphore-protocol/data";
 import { config } from "../../config";
 
-import { DBFloppyDocument } from "../../types";
+import { DBFloppyDocument, IOnChainFloppy } from "../../types";
 import { encodeFunctionData, Hex } from "viem";
 import { FLOPPY_CONTRACT_ABI } from "../../data/floppyContractAbi";
 import { AgentInstance } from "../../infra/smart-agent";
 import { SemaphoreProof, verifyProof } from "@semaphore-protocol/proof";
 import { decodeMessage } from "@semaphore-protocol/utils";
 import { addStorage } from "../limit/addStorage";
+import { publicClient } from "../contract/viemClient";
 
 export class FloppyManager {
   shortCode: string;
@@ -47,7 +48,10 @@ export class FloppyManager {
   async claimFloppy(identityCommitment: string) {
     const floppy = await this.getFloppy();
     if (floppy.offchain) return this.claimOffChain(identityCommitment, floppy);
-    return this.claimOnChain(identityCommitment, floppy);
+    return throwError({
+      code: 400,
+      message: "Cannot claim on chain floppy",
+    });
   }
 
   async redeemFloppy(proof: SemaphoreProof, contractAddress: Hex) {
@@ -135,9 +139,16 @@ export class FloppyManager {
         });
       }
 
+      const { diskSpace } = (await publicClient.readContract({
+        address: config.FLOPPY_CONTRACT_ADDRESS as `0x${string}`,
+        abi: FLOPPY_CONTRACT_ABI,
+        functionName: "getFloppyByShortCode",
+        args: [this.shortCode],
+      })) as IOnChainFloppy;
+
       await addStorage({
         contractAddress: contractAddress as string,
-        diskSpace: floppy.diskSpace,
+        diskSpace: Number(diskSpace),
         shortCode: this.shortCode,
       });
 
@@ -161,8 +172,8 @@ export class FloppyManager {
     return true;
   }
 
-  // CLAIM ON CHAIN LOGIC
-  private async claimOnChain(
+  // CLAIM ON CHAIN LOGIC (INTERNAL USE ONLY)
+  private async _claimOnChain(
     identityCommitment: string,
     floppy: DBFloppyDocument
   ) {
