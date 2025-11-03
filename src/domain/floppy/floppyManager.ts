@@ -48,10 +48,7 @@ export class FloppyManager {
   async claimFloppy(identityCommitment: string) {
     const floppy = await this.getFloppy();
     if (floppy.offchain) return this.claimOffChain(identityCommitment, floppy);
-    return throwError({
-      code: 400,
-      message: "Cannot claim on chain floppy",
-    });
+    return this._claimOnChain(identityCommitment, floppy);
   }
 
   async redeemFloppy(proof: SemaphoreProof, contractAddress: Hex) {
