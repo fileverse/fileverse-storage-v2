@@ -4,7 +4,7 @@ import claim from "./claim";
 import redeem from "./redeem";
 import list from "./list";
 import group from "./group";
-
+import get from "./get";
 // middlewares
 import { isAuthenticated } from "../middleware";
 
@@ -18,5 +18,6 @@ router.post(
 );
 router.get("/list", asyncHandler(isAuthenticated), asyncHandlerArray(list));
 router.post("/group", asyncHandler(isAuthenticated), asyncHandlerArray(group));
+router.get("/get/:shortCode", asyncHandlerArray(get));
 
 export default router;
