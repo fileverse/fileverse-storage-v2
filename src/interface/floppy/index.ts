@@ -6,15 +6,16 @@ import list from "./list";
 import group from "./group";
 
 // middlewares
-import {
-  isAuthenticated,
-} from "../middleware";
-
+import { isAuthenticated } from "../middleware";
 
 const router = Router();
 
 router.post("/claim", asyncHandler(isAuthenticated), asyncHandlerArray(claim));
-router.post("/redeem", asyncHandler(isAuthenticated), asyncHandlerArray(redeem));
+router.post(
+  "/redeem",
+  asyncHandler(isAuthenticated),
+  asyncHandlerArray(redeem)
+);
 router.get("/list", asyncHandler(isAuthenticated), asyncHandlerArray(list));
 router.post("/group", asyncHandler(isAuthenticated), asyncHandlerArray(group));
 

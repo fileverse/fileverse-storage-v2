@@ -24,6 +24,7 @@
     "@filebase/sdk": "^1.0.4",
     "@pinata/sdk": "^1.1.26",
     "@privy-io/server-auth": "^1.26.1",
+    "@semaphore-protocol/data": "^4.14.0",
     "@semaphore-protocol/group": "^4.13.1",
     "@semaphore-protocol/identity": "^4.13.1",
     "@semaphore-protocol/proof": "^4.13.1",
@@ -44,6 +45,8 @@
     "mongoose": "^6.5.4",
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
+    "ox": "^0.8.9",
+    "permissionless": "^0.2.57",
     "request": "^2.88.2",
     "ucans": "^0.10.0",
     "uuid": "^9.0.1",
@@ -61,8 +64,10 @@
     "@types/node": "^22.15.21",
     "@types/request": "^2.48.12",
     "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.2",
-    "typescript": "^5.0.4"
+    "typescript": "^5.9.3"
   }
 }
