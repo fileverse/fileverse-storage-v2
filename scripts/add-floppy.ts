@@ -62,7 +62,6 @@ const addOperator = async (shortCode: string) => {
     args: [shortCode],
   })) as IFloppy;
 
-  console.log(floppy);
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "addOperator",
