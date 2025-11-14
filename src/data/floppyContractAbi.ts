@@ -4,125 +4,6 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
   {
     inputs: [
       {
-        internalType: "string",
-        name: "shortCode",
-        type: "string",
-      },
-      {
-        internalType: "uint256",
-        name: "maxCount",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "diskSpace",
-        type: "uint256",
-      },
-      {
-        internalType: "string",
-        name: "metadataURI",
-        type: "string",
-      },
-      {
-        internalType: "address[]",
-        name: "managers",
-        type: "address[]",
-      },
-    ],
-    name: "addFloppy",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-      {
-        internalType: "address[]",
-        name: "managers",
-        type: "address[]",
-      },
-    ],
-    name: "addManagers",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "operator",
-        type: "address",
-      },
-    ],
-    name: "addOperator",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-      {
-        components: [
-          {
-            internalType: "uint256",
-            name: "merkleTreeDepth",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "merkleTreeRoot",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "nullifier",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "message",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "scope",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256[8]",
-            name: "points",
-            type: "uint256[8]",
-          },
-        ],
-        internalType: "struct ISemaphore.SemaphoreProof",
-        name: "proof",
-        type: "tuple",
-      },
-    ],
-    name: "claimFloppy",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
         internalType: "contract ISemaphore",
         name: "_semaphore",
         type: "address",
@@ -135,6 +16,28 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
     ],
     stateMutability: "nonpayable",
     type: "constructor",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+    ],
+    name: "OwnableInvalidOwner",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+    ],
+    name: "OwnableUnauthorizedAccount",
+    type: "error",
   },
   {
     anonymous: false,
@@ -284,12 +187,6 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
     inputs: [
       {
         indexed: true,
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-      {
-        indexed: true,
         internalType: "address",
         name: "operator",
         type: "address",
@@ -301,12 +198,6 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
   {
     anonymous: false,
     inputs: [
-      {
-        indexed: true,
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
       {
         indexed: true,
         internalType: "address",
@@ -373,19 +264,79 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
     type: "event",
   },
   {
+    anonymous: false,
     inputs: [
       {
+        indexed: true,
+        internalType: "address",
+        name: "previousOwner",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newOwner",
+        type: "address",
+      },
+    ],
+    name: "OwnershipTransferStarted",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "previousOwner",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newOwner",
+        type: "address",
+      },
+    ],
+    name: "OwnershipTransferred",
+    type: "event",
+  },
+  {
+    inputs: [],
+    name: "acceptOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "shortCode",
+        type: "string",
+      },
+      {
         internalType: "uint256",
-        name: "id",
+        name: "maxCount",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "identityCommitment",
+        name: "diskSpace",
         type: "uint256",
       },
+      {
+        internalType: "string",
+        name: "metadataURI",
+        type: "string",
+      },
+      {
+        internalType: "address[]",
+        name: "managers",
+        type: "address[]",
+      },
     ],
-    name: "grantFloppy",
+    name: "addFloppy",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -403,25 +354,20 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
         type: "address[]",
       },
     ],
-    name: "removeManagers",
+    name: "addManagers",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
       {
         internalType: "address",
         name: "operator",
         type: "address",
       },
     ],
-    name: "removeOperator",
+    name: "addOperator",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -434,37 +380,46 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
         type: "uint256",
       },
       {
-        internalType: "uint256",
-        name: "maxCount",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "diskSpace",
-        type: "uint256",
-      },
-      {
-        internalType: "string",
-        name: "metadataURI",
-        type: "string",
+        components: [
+          {
+            internalType: "uint256",
+            name: "merkleTreeDepth",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "merkleTreeRoot",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "nullifier",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "message",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "scope",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256[8]",
+            name: "points",
+            type: "uint256[8]",
+          },
+        ],
+        internalType: "struct ISemaphore.SemaphoreProof",
+        name: "proof",
+        type: "tuple",
       },
     ],
-    name: "updateFloppy",
+    name: "claimFloppy",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "admin",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -588,6 +543,24 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
   {
     inputs: [
       {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "identityCommitment",
+        type: "uint256",
+      },
+    ],
+    name: "grantFloppy",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "",
         type: "address",
@@ -630,6 +603,70 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
   },
   {
     inputs: [],
+    name: "owner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "pendingOwner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        internalType: "address[]",
+        name: "managers",
+        type: "address[]",
+      },
+    ],
+    name: "removeManagers",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "operator",
+        type: "address",
+      },
+    ],
+    name: "removeOperator",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "renounceOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "semaphore",
     outputs: [
       {
@@ -655,6 +692,103 @@ export const FLOPPY_CONTRACT_ABI: Abi = [
         internalType: "uint256",
         name: "",
         type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "newOwner",
+        type: "address",
+      },
+    ],
+    name: "transferOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "maxCount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "diskSpace",
+        type: "uint256",
+      },
+      {
+        internalType: "string",
+        name: "metadataURI",
+        type: "string",
+      },
+    ],
+    name: "updateFloppy",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "merkleTreeDepth",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "merkleTreeRoot",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "nullifier",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "message",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "scope",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256[8]",
+            name: "points",
+            type: "uint256[8]",
+          },
+        ],
+        internalType: "struct ISemaphore.SemaphoreProof",
+        name: "proof",
+        type: "tuple",
+      },
+    ],
+    name: "verifyFloppyProof",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
       },
     ],
     stateMutability: "view",

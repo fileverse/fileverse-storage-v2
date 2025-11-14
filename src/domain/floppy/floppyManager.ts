@@ -11,6 +11,7 @@ import { SemaphoreProof, verifyProof } from "@semaphore-protocol/proof";
 import { decodeMessage } from "@semaphore-protocol/utils";
 import { addStorage } from "../limit/addStorage";
 import { publicClient } from "../contract/viemClient";
+import { SIMPLE_MANAGER_ABI } from "../../data/simpleManagerAbi";
 
 export class FloppyManager {
   shortCode: string;
@@ -182,14 +183,14 @@ export class FloppyManager {
     }
     try {
       const encodedCallData = encodeFunctionData({
-        abi: FLOPPY_CONTRACT_ABI,
-        functionName: "grantFloppy",
-        args: [floppy.onChainFloppyId, [identityCommitment]],
+        abi: SIMPLE_MANAGER_ABI,
+        functionName: "grantFloppyAccess",
+        args: [floppy.shortCode, [identityCommitment]],
       });
 
       const userOp = await AgentInstance.executeUserOperationRequest(
         {
-          contractAddress: config.FLOPPY_CONTRACT_ADDRESS as `0x${string}`,
+          contractAddress: config.MANAGER_CONTRACT_ADDRESS as `0x${string}`,
           data: encodedCallData,
         },
         1000000
