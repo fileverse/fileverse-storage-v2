@@ -26,12 +26,12 @@ const addFloppy = async (shortCode: string) => {
     functionName: "addFloppy",
     args: [
       shortCode,
-      1000,
+      5000,
       5000000000,
-      "ipfs://bafkreic3h7bfs4ifq7kz6wot4b7qyqo3uq3plp4pbf37flg2up5joxkfwq",
+      "ipfs://bafkreidt3kel5ro264wtxteil5aqfblzeok3wxucnp3cmeycwv3yxwxa2i",
       [
-        "0x060910aE5eDD193990760e76001c8B48e9C6EBB1",
-        "0x206FC8d36826ED5e0413dEDCB6A45896b96eae22",
+        "0xfC87C05fa474b8C16A2982f5829163A921D7d091",
+        "0xebf6261737a84a6A47CC3Ff40cccfdDd8531f452",
       ],
     ],
   });
@@ -65,7 +65,7 @@ const addOperator = async (shortCode: string) => {
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "addOperator",
-    args: ["0x060910aE5eDD193990760e76001c8B48e9C6EBB1"],
+    args: ["0xfC87C05fa474b8C16A2982f5829163A921D7d091"],
   });
 
   const userOp = await AgentInstance.executeUserOperationRequest(
@@ -94,7 +94,7 @@ const main = async () => {
     description: `Your own Devconnect Argentina 2025 Floppy! A collectible proof of self-sovereignty that comes with 5 GB of  encrypted storage, for you to explore new forms of private, Ethereum-powered collaboration.
 Cherish it, there will only be one Devconnect Argentina in 2025 <3`,
     diskSpace: Number(floppy.diskSpace),
-    img: "https://s3.eu-west-2.amazonaws.com/assets.fileverse.io/dapp/public/Devconnect+digital+floppy+1.png",
+    img: "https://apps-ipfs.fileverse.io/ipfs/QmcJcNAnEfdfna6WcxjLLGCmQ9QbpoKp5FTMhrx2WkEF6T",
     metadataURI: floppy.metadataURI,
     members: [],
     nullifiers: [],

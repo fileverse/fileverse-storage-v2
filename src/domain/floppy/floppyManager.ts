@@ -1,6 +1,5 @@
 import { Floppy } from "../../infra/database/models";
 import { throwError } from "../../infra/errorHandler";
-import { SemaphoreSubgraph } from "@semaphore-protocol/data";
 import { config } from "../../config";
 
 import { DBFloppyDocument, IOnChainFloppy } from "../../types";
@@ -12,16 +11,13 @@ import { decodeMessage } from "@semaphore-protocol/utils";
 import { addStorage } from "../limit/addStorage";
 import { publicClient } from "../contract/viemClient";
 import { SIMPLE_MANAGER_ABI } from "../../data/simpleManagerAbi";
+import { getGroupMembers } from "./semaphoreSubgraph";
 
 export class FloppyManager {
   shortCode: string;
-  semaphoreSubgraph: SemaphoreSubgraph;
 
   constructor(shortCode: string) {
     this.shortCode = shortCode;
-    this.semaphoreSubgraph = new SemaphoreSubgraph(
-      config.SEMAPHORE_SUBGRAPH_URL as string
-    );
   }
 
   async getFloppy() {
@@ -38,7 +34,7 @@ export class FloppyManager {
   async getGroup() {
     const floppy = await this.getFloppy();
     if (floppy.offchain) return floppy.toJSON();
-    const members = await this.semaphoreSubgraph.getGroupMembers(floppy.sgid);
+    const members = await getGroupMembers(floppy.sgid);
 
     return {
       ...floppy.toJSON(),
