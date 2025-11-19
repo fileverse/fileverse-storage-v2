@@ -10,7 +10,7 @@ export const getGroupMembers = async (groupId: string) => {
   const size = await getMerkleTreeSize(groupId);
 
   const data = JSON.stringify({
-    query: `{\n  groups(where: {id: "${groupId}"}) {\n    members(first: ${size}) {\n      identityCommitment\n    }\n  }\n}`,
+    query: `{\n  groups(where: {id: "${groupId}"}) {\n    members(first: ${size}, orderBy: index) {\n      identityCommitment\n    }\n  }\n}`,
     extensions: {},
   });
   const config = {
