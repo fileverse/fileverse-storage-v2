@@ -80,6 +80,7 @@ export class FloppyManager {
         contractAddress: contractAddress as string,
         diskSpace: floppy.diskSpace,
         shortCode: this.shortCode,
+        supportsMultipleClaims: floppy.supportsMultipleClaims,
       });
       // add nullifier to floppy
       floppy.nullifiers.push(proof.nullifier);
@@ -144,6 +145,7 @@ export class FloppyManager {
         contractAddress: contractAddress as string,
         diskSpace: Number(diskSpace),
         shortCode: this.shortCode,
+        supportsMultipleClaims: floppy.supportsMultipleClaims,
       });
 
       return true;

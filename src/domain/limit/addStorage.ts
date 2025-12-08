@@ -1,45 +1,47 @@
 import { Limit } from "../../infra/database/models";
 import { throwError } from "../../infra/errorHandler";
 
+interface AddStorageParams {
+  contractAddress: string;
+  diskSpace: number;
+  shortCode: string;
+  supportsMultipleClaims: boolean;
+}
+
 export const addStorage = async ({
   contractAddress,
   diskSpace,
   shortCode,
-}: {
-  contractAddress: string;
-  diskSpace: number;
-  shortCode: string;
-}) => {
-  console.log({ contractAddress, diskSpace, shortCode });
-  const limit = await Limit.findOne({ contractAddress });
-  if (limit?.redeemMap && limit?.redeemMap[shortCode]) {
+  supportsMultipleClaims,
+}: AddStorageParams) => {
+  const existingLimit = await Limit.findOne({ contractAddress });
+  const existingRedeemValue = existingLimit?.redeemMap?.[shortCode];
+
+  if (existingRedeemValue && !supportsMultipleClaims) {
     return throwError({
       code: 400,
       message: "Storage already added for this floppy",
     });
   }
 
-  const resp = await Limit.findOneAndUpdate(
+  const newRedeemValue =
+    supportsMultipleClaims && existingRedeemValue
+      ? existingRedeemValue + diskSpace
+      : diskSpace;
+
+  await Limit.findOneAndUpdate(
     { contractAddress },
     {
-      $inc: {
-        extraStorage: diskSpace,
-      },
+      $inc: { extraStorage: diskSpace },
       $set: {
         redeemMap: {
-          ...limit?.redeemMap,
-          [shortCode]: diskSpace,
+          ...existingLimit?.redeemMap,
+          [shortCode]: newRedeemValue,
         },
       },
     },
-    { new: true, upsert: true }
+    { upsert: true }
   );
 
-  if (!resp) {
-    return throwError({
-      code: 404,
-      message: "Contract not found",
-    });
-  }
   return true;
 };

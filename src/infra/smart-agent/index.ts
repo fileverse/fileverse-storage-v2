@@ -13,7 +13,7 @@ import { createSmartAccountClient } from "permissionless";
 
 class AgentClient implements IAgentClient {
   private smartAccountAgent: TSmartAccountClient | null = null;
-  private readonly MAX_CALL_GAS_LIMIT = 5000000;
+  private readonly MAX_CALL_GAS_LIMIT = 500000;
 
   pimlicoClient = createPimlicoClient({
     transport: http(config.BUNDLER_URL),

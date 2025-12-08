@@ -119,6 +119,7 @@ export interface DBFloppy {
   networkName: string;
   timeStamp: number;
   onChainFloppyId?: number | undefined;
+  supportsMultipleClaims: boolean;
 }
 
 export type DBFloppyDocument = Document<unknown, any, DBFloppy> &
