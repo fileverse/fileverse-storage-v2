@@ -6,7 +6,10 @@ import { encodeFunctionData, Hex, parseEventLogs } from "viem";
 import { publicClient } from "../src/domain/contract/viemClient";
 import { Floppy } from "../src/infra/database/models";
 
-const { FLOPPY_CONTRACT_ADDRESS } = config as { FLOPPY_CONTRACT_ADDRESS: Hex };
+const { FLOPPY_CONTRACT_ADDRESS, MANAGER_CONTRACT_ADDRESS } = config as {
+  FLOPPY_CONTRACT_ADDRESS: Hex;
+  MANAGER_CONTRACT_ADDRESS: Hex;
+};
 
 interface IFloppy {
   id: bigint;
@@ -18,21 +21,29 @@ interface IFloppy {
   metadataURI: string;
 }
 
-const SHORT_CODE = "DEVCONNECT25";
+const FLOPPY = {
+  shortCode: "TESTCRC",
+  diskSpace: 250000000, // 250 MB
+  metadataURI:
+    "ipfs://bafkreidt3kel5ro264wtxteil5aqfblzeok3wxucnp3cmeycwv3yxwxa2i",
+  maxCount: 150,
+  name: `Fileverse x Circles 2025. - Test Floppy`,
+  description: `For CRC holders and Metri users, Fileverse and Circles collaborated in creating a nostalgic floppy disc celebrating sovereing storage spaces we can own once we acquire it! This floppy disc has been created for you, it has 250 MB of encryptes storage space you can enable at any moment on ddocs.new, and it comes with other hidden perks 💛`,
+  img: "https://s3.eu-west-2.amazonaws.com/assets.fileverse.io/dapp/public/Circles+Transparent_Front+1.png",
+  offchain: false,
+  supportsMultipleClaims: true,
+};
 
-const addFloppy = async (shortCode: string) => {
+const addFloppy = async () => {
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "addFloppy",
     args: [
-      shortCode,
-      5000,
-      5000000000,
-      "ipfs://bafkreidt3kel5ro264wtxteil5aqfblzeok3wxucnp3cmeycwv3yxwxa2i",
-      [
-        "0xfC87C05fa474b8C16A2982f5829163A921D7d091",
-        "0xebf6261737a84a6A47CC3Ff40cccfdDd8531f452",
-      ],
+      FLOPPY.shortCode,
+      FLOPPY.maxCount,
+      FLOPPY.diskSpace,
+      FLOPPY.metadataURI,
+      [AgentInstance.getAgentAddress(), MANAGER_CONTRACT_ADDRESS],
     ],
   });
 
@@ -54,18 +65,18 @@ const addFloppy = async (shortCode: string) => {
   return parsedLog[0];
 };
 
-const addOperator = async (shortCode: string) => {
+const addOperator = async () => {
   const floppy = (await publicClient.readContract({
     address: FLOPPY_CONTRACT_ADDRESS,
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "getFloppyByShortCode",
-    args: [shortCode],
+    args: [FLOPPY.shortCode],
   })) as IFloppy;
 
   const encodedCallData = encodeFunctionData({
     abi: FLOPPY_CONTRACT_ABI,
     functionName: "addOperator",
-    args: ["0xfC87C05fa474b8C16A2982f5829163A921D7d091"],
+    args: [AgentInstance.getAgentAddress()],
   });
 
   const userOp = await AgentInstance.executeUserOperationRequest(
@@ -86,27 +97,26 @@ const addOperator = async (shortCode: string) => {
 const main = async () => {
   await AgentInstance.initializeAgentClient();
 
-  const shortCode = SHORT_CODE;
-  await addFloppy(shortCode);
-  const floppy = await addOperator(shortCode);
+  await addFloppy();
+  const floppy = await addOperator();
   const dbFloppy = new Floppy({
-    shortCode,
-    description: `Your own Devconnect Argentina 2025 Floppy! A collectible proof of self-sovereignty that comes with 5 GB of  encrypted storage, for you to explore new forms of private, Ethereum-powered collaboration.
-Cherish it, there will only be one Devconnect Argentina in 2025 <3`,
+    shortCode: FLOPPY.shortCode,
+    description: FLOPPY.description,
     diskSpace: Number(floppy.diskSpace),
-    img: "https://apps-ipfs.fileverse.io/ipfs/QmcJcNAnEfdfna6WcxjLLGCmQ9QbpoKp5FTMhrx2WkEF6T",
-    metadataURI: floppy.metadataURI,
+    img: FLOPPY.img,
+    metadataURI: FLOPPY.metadataURI,
     members: [],
     nullifiers: [],
-    offchain: false,
+    offchain: FLOPPY.offchain,
     networkName: config.NETWORK,
     sgid: floppy.groupId.toString(),
-    name: `Devconnect 2025`,
+    name: FLOPPY.name,
     onChainFloppyId: floppy.id.toString(),
+    supportsMultipleClaims: FLOPPY.supportsMultipleClaims,
   });
   await dbFloppy.save();
 
-  console.log(`Floppy ${shortCode} added to database`);
+  console.log(`Floppy ${FLOPPY.shortCode} added to database`);
 };
 
 main().then(() => {

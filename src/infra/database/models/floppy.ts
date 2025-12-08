@@ -24,6 +24,7 @@ const FloppySchema = new Schema({
     default: Date.now,
   },
   onChainFloppyId: { type: Number, index: true, required: false },
+  supportsMultipleClaims: { type: Boolean, default: false, required: false },
 });
 
 FloppySchema.pre("save", function (next) {
