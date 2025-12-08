@@ -5,6 +5,7 @@ import pinataSDK, {
   type PinataPinOptions,
   type PinataPinResponse,
 } from "@pinata/sdk";
+import { logger } from "../../infra/logger";
 
 const pinataClient = pinataSDK(
   config.PINATA_API_KEY as string,
@@ -55,6 +56,7 @@ export const upload = async (
     return formatUploadResponse(file);
   } catch (err) {
     console.error("error while uploading to pinata", err);
+    logger.error(`error while uploading to pinata: ${err}`);
     throw err;
   }
 };
