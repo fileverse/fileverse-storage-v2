@@ -55,8 +55,12 @@ export const upload = async (
 
     return formatUploadResponse(file);
   } catch (err) {
-    console.error("error while uploading to pinata", err);
-    logger.error(`error while uploading to pinata: ${err}`);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const errorStack = err instanceof Error ? err.stack : undefined;
+    logger.error(
+      { err, errorMessage, errorStack },
+      "error while uploading to pinata"
+    );
     throw err;
   }
 };
@@ -74,7 +78,12 @@ export const unpin = async (ipfsHash: string) => {
   try {
     await pinataClient.unpin(ipfsHash);
   } catch (err) {
-    console.error("error while unpinning from pinata", err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const errorStack = err instanceof Error ? err.stack : undefined;
+    logger.error(
+      { err, errorMessage, errorStack },
+      "error while unpinning from pinata"
+    );
     throw err;
   }
 };

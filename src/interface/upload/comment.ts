@@ -19,35 +19,39 @@ const commentSchema = Joi.object({
 });
 
 async function uploadCommentFn(req: CustomRequest, res: Response) {
-  const file = isArray(req.files?.file) ? req.files?.file[0] : req.files?.file;
+  try {
+    const file = isArray(req.files?.file) ? req.files?.file[0] : req.files?.file;
 
-  if (file?.mimetype !== "application/json") {
-    return throwError({
-      code: 400,
-      message: `File must be a JSON file`,
-      req,
-    });
+    if (file?.mimetype !== "application/json") {
+      return throwError({
+        code: 400,
+        message: `File must be a JSON file`,
+        req,
+      });
+    }
+
+    const jsonData = JSON.parse(file.data.toString());
+    const { error } = commentSchema.validate(jsonData);
+
+    if (error) {
+      return throwError({
+        code: 400,
+        message: error.details[0].message,
+        req,
+      });
+    }
+
+    const createdFile = await upload({
+      // @ts-ignore
+      file: req.files?.file,
+      ipfsType: FileIPFSType.COMMENT,
+      contractAddress: req.headers.contract as string,
+    }).catch(console.log);
+
+    res.json(createdFile);
+  } catch (err) {
+    throw err;
   }
-
-  const jsonData = JSON.parse(file.data.toString());
-  const { error } = commentSchema.validate(jsonData);
-
-  if (error) {
-    return throwError({
-      code: 400,
-      message: error.details[0].message,
-      req,
-    });
-  }
-
-  const createdFile = await upload({
-    // @ts-ignore
-    file: req.files?.file,
-    ipfsType: FileIPFSType.COMMENT,
-    contractAddress: req.headers.contract as string,
-  }).catch(console.log);
-
-  res.json(createdFile);
 }
 
 export default [validate(uploadValidation), uploadCommentFn];
