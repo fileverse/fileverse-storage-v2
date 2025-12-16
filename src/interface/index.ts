@@ -5,6 +5,7 @@ import upload from "./upload";
 import users from "./users";
 import community from "./community";
 import file from "./file";
+import semaphore from "./semaphore";
 
 const router = Router();
 
@@ -19,5 +20,7 @@ router.use("/users", users);
 router.use("/community", community);
 
 router.use("/file", file);
+
+router.use("/semaphore", semaphore);
 
 export default router;
