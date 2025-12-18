@@ -7,9 +7,15 @@ interface EmailWithAddress {
   address: string;
 }
 
+interface SocialWithAddress {
+  username: string;
+  address: string;
+}
+
 async function address(req: CustomRequest, res: Response) {
-  const { emails } = req.body;
+  const { emails, socials } = req.body;
   const userAddressResponse: EmailWithAddress[] = [];
+  const userSocialAddressResponse: SocialWithAddress[] = [];
   const failedUserImports: string[] = [];
 
   const distinctEmails = [...new Set(emails)].map(String);
@@ -28,9 +34,22 @@ async function address(req: CustomRequest, res: Response) {
     }
   }
 
+  if(socials){
+
+    for (const social of socials) {
+      const { platform, username } = social;
+      const data = await PrivyInstance.getUserBySocial(platform, username);
+      if (data) {
+        userSocialAddressResponse.push(data);
+      }
+    }
+
+  }
+
   res.json({
     userAddresses: userAddressResponse,
     failedUserImports: failedUserImports,
+    userSocialAddresses: userSocialAddressResponse,
   });
 }
 
