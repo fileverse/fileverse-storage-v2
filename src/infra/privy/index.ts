@@ -7,6 +7,28 @@ const getPrivyUserAddress = (user: User | null) => {
   return user.wallet.address;
 };
 
+const getPrivySocialQueryHandler = (
+  platform: string,
+  privyClient: PrivyClient
+) => {
+  switch (platform) {
+    case 'github':
+      return privyClient.getUserByGithubUsername.bind(privyClient);
+
+    case 'twitter':
+      return privyClient.getUserByTwitterUsername.bind(privyClient);
+
+    case 'discord':
+      return privyClient.getUserByDiscordUsername.bind(privyClient);
+
+    case 'farcaster':
+      return privyClient.getUserByFarcasterId.bind(privyClient);
+
+    default:
+      return null;
+  }
+};
+
 class PrivyWrapper {
   private privyClient: PrivyClient;
 
@@ -50,6 +72,19 @@ class PrivyWrapper {
     }
 
     return null;
+  }
+  async getUserBySocial(platform: string, username: string) {
+    const getUserSocialInfo = getPrivySocialQueryHandler(platform, this.privyClient)
+    if(!getUserSocialInfo) return null;
+    // @ts-ignore
+    const existingUser = await getUserSocialInfo(username);
+    const userAddress = getPrivyUserAddress(existingUser);
+    if (existingUser && userAddress) {
+      return {
+        username: username,
+        address: userAddress,
+      };
+    }
   }
 }
 
