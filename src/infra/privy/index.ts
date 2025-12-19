@@ -55,8 +55,10 @@ class PrivyWrapper {
 
   async getUserByFarcasterUsername(username: string) {
     const fid = await getUserFidByUsername(username);
+
     if (!fid) return null;
     const existingUser = await this.privyClient.getUserByFarcasterId(fid);
+
     const userAddress = getPrivyUserAddress(existingUser);
     if (existingUser && userAddress) {
       return {
