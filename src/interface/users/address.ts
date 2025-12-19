@@ -1,7 +1,7 @@
 import { PrivyInstance } from "../../infra/privy";
 import { CustomRequest } from "../../types";
 
-import { Response, Request } from "express";
+import { Response } from "express";
 interface EmailWithAddress {
   email: string;
   address: string;
@@ -38,7 +38,10 @@ async function address(req: CustomRequest, res: Response) {
     for (const social of socials) {
       const { platform, username } = social;
       const data = await PrivyInstance.getUserBySocial(platform, username);
-      if (!data) return res.status(404).json({ error: "User not found" });
+      if (!data) {
+        failedUserImports.push(social);
+        continue;
+      }
       if (data) {
         userSocialAddressResponse.push(data);
       }

@@ -8,28 +8,6 @@ const getPrivyUserAddress = (user: User | null) => {
   return user.wallet.address;
 };
 
-const getPrivySocialQueryHandler = (
-  platform: string,
-  privyClient: PrivyClient
-) => {
-  switch (platform) {
-    case "github":
-      return privyClient.getUserByGithubUsername.bind(privyClient);
-
-    case "twitter":
-      return privyClient.getUserByTwitterUsername.bind(privyClient);
-
-    case "discord":
-      return privyClient.getUserByDiscordUsername.bind(privyClient);
-
-    case "farcaster":
-      return privyClient.getUserByFarcasterId.bind(privyClient);
-
-    default:
-      return null;
-  }
-};
-
 class PrivyWrapper {
   private privyClient: PrivyClient;
 
@@ -74,25 +52,74 @@ class PrivyWrapper {
 
     return null;
   }
-  async getUserBySocial(platform: string, username: string) {
-    const getUserSocialInfo = getPrivySocialQueryHandler(
-      platform,
-      this.privyClient
-    );
-    if (!getUserSocialInfo) return null;
-    const actualUserName =
-      platform === "farcaster"
-        ? await getUserFidByUsername(username)
-        : username;
-    if (!actualUserName) return null;
-    // @ts-ignore
-    const existingUser = await getUserSocialInfo(actualUserName);
+
+  async getUserByFarcasterUsername(username: string) {
+    const fid = await getUserFidByUsername(username);
+    if (!fid) return null;
+    const existingUser = await this.privyClient.getUserByFarcasterId(fid);
     const userAddress = getPrivyUserAddress(existingUser);
     if (existingUser && userAddress) {
       return {
         username: username,
         address: userAddress,
       };
+    }
+    return null;
+  }
+
+  async getUserByGithubUsername(username: string) {
+    const existingUser = await this.privyClient.getUserByGithubUsername(
+      username
+    );
+    const userAddress = getPrivyUserAddress(existingUser);
+    if (existingUser && userAddress) {
+      return {
+        username: username,
+        address: userAddress,
+      };
+    }
+    return null;
+  }
+
+  async getUserByDiscordUsername(username: string) {
+    const existingUser = await this.privyClient.getUserByDiscordUsername(
+      username
+    );
+    const userAddress = getPrivyUserAddress(existingUser);
+    if (existingUser && userAddress) {
+      return {
+        username: username,
+        address: userAddress,
+      };
+    }
+    return null;
+  }
+
+  async getUserByTwitterUsername(username: string) {
+    const existingUser = await this.privyClient.getUserByTwitterUsername(
+      username
+    );
+    const userAddress = getPrivyUserAddress(existingUser);
+    if (existingUser && userAddress) {
+      return {
+        username: username,
+        address: userAddress,
+      };
+    }
+    return null;
+  }
+  async getUserBySocial(platform: string, username: string) {
+    switch (platform) {
+      case "farcaster":
+        return this.getUserByFarcasterUsername(username);
+      case "github":
+        return this.getUserByGithubUsername(username);
+      case "discord":
+        return this.getUserByDiscordUsername(username);
+      case "twitter":
+        return this.getUserByTwitterUsername(username);
+      default:
+        return null;
     }
   }
 }
