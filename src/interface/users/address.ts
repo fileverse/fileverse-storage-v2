@@ -34,16 +34,15 @@ async function address(req: CustomRequest, res: Response) {
     }
   }
 
-  if(socials){
-
+  if (socials) {
     for (const social of socials) {
       const { platform, username } = social;
       const data = await PrivyInstance.getUserBySocial(platform, username);
+      if (!data) return res.status(404).json({ error: "User not found" });
       if (data) {
         userSocialAddressResponse.push(data);
       }
     }
-
   }
 
   res.json({

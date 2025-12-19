@@ -1,4 +1,5 @@
 import { PrivyClient, User } from "@privy-io/server-auth";
+import { getUserFidByUsername } from "../../interface/users/neynar-api";
 
 const getPrivyUserAddress = (user: User | null) => {
   if (!user) return null;
@@ -12,16 +13,16 @@ const getPrivySocialQueryHandler = (
   privyClient: PrivyClient
 ) => {
   switch (platform) {
-    case 'github':
+    case "github":
       return privyClient.getUserByGithubUsername.bind(privyClient);
 
-    case 'twitter':
+    case "twitter":
       return privyClient.getUserByTwitterUsername.bind(privyClient);
 
-    case 'discord':
+    case "discord":
       return privyClient.getUserByDiscordUsername.bind(privyClient);
 
-    case 'farcaster':
+    case "farcaster":
       return privyClient.getUserByFarcasterId.bind(privyClient);
 
     default:
@@ -74,10 +75,18 @@ class PrivyWrapper {
     return null;
   }
   async getUserBySocial(platform: string, username: string) {
-    const getUserSocialInfo = getPrivySocialQueryHandler(platform, this.privyClient)
-    if(!getUserSocialInfo) return null;
+    const getUserSocialInfo = getPrivySocialQueryHandler(
+      platform,
+      this.privyClient
+    );
+    if (!getUserSocialInfo) return null;
+    const actualUserName =
+      platform === "farcaster"
+        ? await getUserFidByUsername(username)
+        : username;
+    if (!actualUserName) return null;
     // @ts-ignore
-    const existingUser = await getUserSocialInfo(username);
+    const existingUser = await getUserSocialInfo(actualUserName);
     const userAddress = getPrivyUserAddress(existingUser);
     if (existingUser && userAddress) {
       return {
