@@ -50,6 +50,13 @@ export class FloppyManager {
 
   async redeemFloppy(proof: SemaphoreProof, contractAddress: Hex) {
     const floppy = await this.getFloppy();
+    if (floppy.nullifiers.includes(proof.nullifier)) {
+      return throwError({
+        code: 400,
+        message: "Code already redeemed",
+      });
+    }
+
     if (floppy.offchain)
       return this.redeemOffChain(proof, floppy, contractAddress);
     return this.redeemOnChain(proof, floppy, contractAddress);
@@ -61,12 +68,6 @@ export class FloppyManager {
     floppy: DBFloppyDocument,
     contractAddress: Hex
   ) {
-    if (floppy.nullifiers.includes(proof.nullifier)) {
-      return throwError({
-        code: 400,
-        message: "Code already redeemed",
-      });
-    }
     const valid = await verifyProof(proof as any);
     if (!valid) {
       return throwError({
@@ -110,13 +111,6 @@ export class FloppyManager {
         scope,
         points,
       } = proof;
-
-      if (floppy.nullifiers.includes(nullifier)) {
-        return throwError({
-          code: 400,
-          message: "Code already redeemed",
-        });
-      }
 
       const encodedCallData = encodeFunctionData({
         abi: FLOPPY_CONTRACT_ABI,
