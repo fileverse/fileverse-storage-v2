@@ -50,22 +50,24 @@ export class FloppyManager {
 
   async redeemFloppy(proof: SemaphoreProof, contractAddress: Hex) {
     const floppy = await this.getFloppy();
+    if (floppy.nullifiers.includes(proof.nullifier)) {
+      return throwError({
+        code: 400,
+        message: "Code already redeemed",
+      });
+    }
+
     if (floppy.offchain)
       return this.redeemOffChain(proof, floppy, contractAddress);
     return this.redeemOnChain(proof, floppy, contractAddress);
   }
+
   // REDEEM OFF CHAIN LOGIC
   private async redeemOffChain(
     proof: SemaphoreProof,
     floppy: DBFloppyDocument,
     contractAddress: Hex
   ) {
-    if (floppy.nullifiers.includes(proof.nullifier)) {
-      return throwError({
-        code: 400,
-        message: "Nullifier already used",
-      });
-    }
     const valid = await verifyProof(proof as any);
     if (!valid) {
       return throwError({
@@ -147,6 +149,10 @@ export class FloppyManager {
         shortCode: this.shortCode,
         supportsMultipleClaims: floppy.supportsMultipleClaims,
       });
+
+      // add nullifier to floppy
+      floppy.nullifiers.push(proof.nullifier);
+      await floppy.save();
 
       return true;
     } catch (err) {
