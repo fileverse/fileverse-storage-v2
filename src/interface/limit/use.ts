@@ -87,7 +87,6 @@ async function use(req: CustomRequest, res: Response) {
   if (
     !contractAddresses ||
     contractAddresses.length === 0 ||
-    contractAddresses.length > 2 ||
     !invokerAddress ||
     !chainId
   ) {
