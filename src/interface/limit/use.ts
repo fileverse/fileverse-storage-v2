@@ -120,7 +120,10 @@ async function use(req: CustomRequest, res: Response) {
         data.storageUse += Number(legacyStorage.storageUse);
       }
     } else {
-      const appStorage = await getStorageUse({ contractAddress });
+      const appStorage = await getStorageUse({
+        contractAddress,
+        shouldIncludeLegacy: false,
+      });
       data.storageLimit += Number(appStorage.storageLimit);
       data.extraStorage += Number(appStorage.extraStorage);
       data.storageUse += Number(appStorage.storageUse);
@@ -129,7 +132,7 @@ async function use(req: CustomRequest, res: Response) {
 
   res.json({
     ...data,
-    storageLimit: Number(data.storageLimit) + data.extraStorage,
+    storageLimit: Number(data.storageLimit),
   });
 }
 

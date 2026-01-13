@@ -1,8 +1,8 @@
-import { reportError } from "../../infra/reporter";
 import { getStorageUse } from "../../domain/limit/getStorageUse";
 import { NextFunction } from "express";
 import { CustomRequest } from "../../types";
 import { Response } from "express";
+import { throwError } from "../../infra/errorHandler";
 
 export const checkStorageLimit = async (
   contractAddress: string,
@@ -29,8 +29,12 @@ export const canUpload = async (
   if (!req.isAuthenticated) {
     const statusCode = invokerAddress ? 403 : 401;
     const message = `invokerAddress: ${invokerAddress} does not have permission to upload file for subdomain: ${contractAddress}`;
-    reportError(message).catch(console.log);
-    return;
+
+    return throwError({
+      code: statusCode,
+      message,
+      req,
+    });
   }
 
   const storageLimitBreached = await checkStorageLimit(
@@ -40,9 +44,12 @@ export const canUpload = async (
   if (storageLimitBreached) {
     const statusCode = 400;
     const message = `Storage for ${contractAddress} is full, please either claim more storage or contact us on twitter @fileverse`;
-    reportError(message).catch(console.log);
 
-    return;
+    return throwError({
+      code: statusCode,
+      message,
+      req,
+    });
   }
 
   next();

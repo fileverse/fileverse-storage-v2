@@ -4,8 +4,10 @@ const DEFAULT_STORAGE_LIMIT = 200000000;
 
 export const getStorageUse = async ({
   contractAddress,
+  shouldIncludeLegacy = true,
 }: {
   contractAddress: string;
+  shouldIncludeLegacy?: boolean;
 }) => {
   const limit = await Limit.findOne({ contractAddress });
   const legacyPortalLimit = await LegacyPortalLimit.findOne({
@@ -22,7 +24,7 @@ export const getStorageUse = async ({
   let storageUse = limit?.storageUse ? Number(limit.storageUse) : 0;
   const extraStorage = limit?.extraStorage ? Number(limit.extraStorage) : 0;
 
-  if (legacyPortalLimit) {
+  if (legacyPortalLimit && shouldIncludeLegacy) {
     storageLimit += Number(legacyPortalLimit.storageLimit);
     storageUse += Number(legacyPortalLimit.storageUse);
   }
