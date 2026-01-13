@@ -10,7 +10,7 @@ import { verify } from "./infra/ucan";
 
 // Express App
 const app = express();
-
+app.set("etag", false);
 // parse application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: false }));
 
