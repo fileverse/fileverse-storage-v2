@@ -29,6 +29,12 @@ export const getStorageUse = async ({
     storageUse += Number(legacyPortalLimit.storageUse);
   }
 
+  if (limit?.redeemMap && Object.keys(limit.redeemMap).length > 0) {
+    storageLimit += Object.values(
+      limit.redeemMap as Record<string, number>
+    ).reduce((acc: number, curr: number) => acc + curr, 0);
+  }
+
   return {
     contractAddress,
     storageLimit,
