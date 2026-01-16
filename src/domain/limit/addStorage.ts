@@ -29,6 +29,10 @@ export const addStorage = async ({
       ? existingRedeemValue + diskSpace
       : diskSpace;
 
+  const redeemMapDetails = existingLimit?.redeemMapDetails
+    ? existingLimit.redeemMapDetails
+    : {};
+
   await Limit.findOneAndUpdate(
     { contractAddress },
     {
@@ -37,6 +41,13 @@ export const addStorage = async ({
         redeemMap: {
           ...existingLimit?.redeemMap,
           [shortCode]: newRedeemValue,
+        },
+        redeemMapDetails: {
+          ...existingLimit?.redeemMapDetails,
+          [shortCode]: {
+            claimCount: (redeemMapDetails[shortCode]?.claimCount || 0) + 1,
+            lastClaimedAt: new Date(),
+          },
         },
       },
     },

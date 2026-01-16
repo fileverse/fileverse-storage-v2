@@ -106,10 +106,14 @@ async function resolveUserOperations() {
       const floppyShortCode = userOp.floppyShortCode;
       const nullifier = userOp.nullifier;
 
+      logger.info(
+        `Resolving user op hash ${userOpHash} for floppy ${floppyShortCode} and contract ${contractAddress}`
+      );
       const userOpReceipt = await pimlicoClient.waitForUserOperationReceipt({
         hash: userOpHash as `0x${string}`,
         timeout: 1000000,
       });
+      logger.info(`User op receipt state: ${userOpReceipt.success}`);
 
       if (userOpReceipt.success) {
         const { diskSpace } = (await publicClient.readContract({
