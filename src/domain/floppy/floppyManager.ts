@@ -12,6 +12,7 @@ import { addStorage } from "../limit/addStorage";
 import { publicClient } from "../contract/viemClient";
 import { SIMPLE_MANAGER_ABI } from "../../data/simpleManagerAbi";
 import { getGroupMembers } from "./semaphoreSubgraph";
+import UserOps from "../../infra/database/models/user-ops";
 
 export class FloppyManager {
   shortCode: string;
@@ -121,40 +122,36 @@ export class FloppyManager {
         ],
       });
 
-      const userOp = await AgentInstance.executeUserOperationRequest(
-        {
-          contractAddress: config.FLOPPY_CONTRACT_ADDRESS as `0x${string}`,
-          data: encodedCallData,
-        },
-        1000000
-      );
+      const userOpHash = await AgentInstance.sendUserOperation({
+        contractAddress: config.FLOPPY_CONTRACT_ADDRESS as `0x${string}`,
+        data: encodedCallData,
+      });
 
-      if (!userOp.success) {
+      if (!userOpHash) {
         return throwError({
           code: 500,
           message: "Failed to claim floppy",
         });
       }
 
-      const { diskSpace } = (await publicClient.readContract({
-        address: config.FLOPPY_CONTRACT_ADDRESS as `0x${string}`,
-        abi: FLOPPY_CONTRACT_ABI,
-        functionName: "getFloppyByShortCode",
-        args: [this.shortCode],
-      })) as IOnChainFloppy;
-
-      await addStorage({
-        contractAddress: contractAddress as string,
-        diskSpace: Number(diskSpace),
-        shortCode: this.shortCode,
-        supportsMultipleClaims: floppy.supportsMultipleClaims,
+      const userOp = await UserOps.create({
+        userOpHash,
+        contractAddress: contractAddress,
+        floppyShortCode: this.shortCode,
+        isProcessed: false,
+        nullifier: proof.nullifier,
       });
 
-      // add nullifier to floppy
-      floppy.nullifiers.push(proof.nullifier);
-      await floppy.save();
+      if (!userOp) {
+        return throwError({
+          code: 500,
+          message: "Failed to create user op",
+        });
+      }
 
-      return true;
+      await userOp.save();
+
+      return { userOpHash: userOpHash };
     } catch (err) {
       console.error(err);
       return throwError({

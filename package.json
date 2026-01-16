@@ -12,6 +12,7 @@
     "start:unpin-gate-cron": "NODE_ENV=production node dist/interface/agenda/unpinGateCron.js",
     "start:unpin-deleted-file-cron": "NODE_ENV=production node dist/interface/agenda/unpinDeletedFileCron.js",
     "dev:unpin-deleted-file-cron": "nodemon --exec ts-node src/interface/agenda/unpinDeletedFileCron.ts",
+    "start:resolve-user-op-hash-cron": "NODE_ENV=production node dist/interface/agenda/resolveUserOpHashCron.js",
     "postinstall": "npm run build"
   },
   "keywords": [

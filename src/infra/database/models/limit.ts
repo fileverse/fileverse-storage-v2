@@ -34,6 +34,7 @@ const limitSchema = new Schema({
   unit: { type: String, default: "bytes" },
   claimsMap: { type: Schema.Types.Mixed },
   redeemMap: { type: Schema.Types.Mixed },
+  redeemMapDetails: { type: Schema.Types.Mixed },
   timeStamp: {
     type: Number,
     required: true,

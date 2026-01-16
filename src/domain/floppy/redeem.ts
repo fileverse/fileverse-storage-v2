@@ -12,5 +12,6 @@ export const redeem = async ({
   proof: SemaphoreProof;
 }) => {
   const floppyManager = new FloppyManager(shortCode);
+
   return floppyManager.redeemFloppy(proof, contractAddress as Hex);
 };
