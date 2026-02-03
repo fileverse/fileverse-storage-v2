@@ -6,6 +6,7 @@ import users from "./users";
 import community from "./community";
 import file from "./file";
 import semaphore from "./semaphore";
+import apiAccess from "./api-access";
 
 const router = Router();
 
@@ -22,5 +23,7 @@ router.use("/community", community);
 router.use("/file", file);
 
 router.use("/semaphore", semaphore);
+
+router.use("/api-access", apiAccess);
 
 export default router;
