@@ -7,18 +7,6 @@ const apiAccessKeySchema = new Schema({
     unique: true,
     index: true,
   },
-  ownerAddress: {
-    type: String,
-    lowercase: true,
-    required: true,
-    index: true,
-  },
-  portalAddress: {
-    type: String,
-    lowercase: true,
-    required: true,
-    index: true,
-  },
   encryptedKeyMaterial: {
     type: String,
     required: true,

@@ -24,6 +24,6 @@ router.use("/file", file);
 
 router.use("/semaphore", semaphore);
 
-router.use("/api-access/keys", apiAccess);
+router.use("/api-access", apiAccess);
 
 export default router;

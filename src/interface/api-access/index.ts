@@ -6,7 +6,7 @@ import remove from "./remove";
 
 const router = Router();
 
-router.post("/", asyncHandlerArray(save));
+router.post("/save", asyncHandlerArray(save));
 router.get("/:hashedApiKey", asyncHandlerArray(get));
 router.delete("/:hashedApiKey", asyncHandlerArray(remove));
 
