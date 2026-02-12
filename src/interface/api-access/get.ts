@@ -3,6 +3,7 @@ import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
 import { Response } from "express";
+import { logger } from "../../infra/logger";
 
 const getValidation = {
   params: Joi.object({
@@ -12,23 +13,39 @@ const getValidation = {
 
 async function getHandler(req: CustomRequest, res: Response) {
   const { hashedApiKey } = req.params;
-  const data = await get({
-    hashedApiKey,
-  });
+  
+  try {
+    const data = await get({
+      hashedApiKey,
+    });
+    
+    if (!data) {
+      logger.warn(`API access key not found for hashedApiKey: ${hashedApiKey}`);
+      return throwError({
+        code: 404,
+        message: "API access not found",
+        req,
+      });
+    }
 
-  if (!data) {
+    logger.info(`API access key found for hashedApiKey: ${hashedApiKey}`);
+    return res.json({
+      encryptedKeyMaterial: data.encryptedKeyMaterial,
+      encryptedAppMaterial: data.encryptedAppMaterial,
+      id: data.id,
+    });
+  } catch (error: any) {
+    if (error.code) {
+      throw error;
+    }
+    
+    logger.error(`Error fetching API access key with hashedApiKey ${hashedApiKey}:`, error);
     return throwError({
-      code: 404,
-      message: "API access not found",
+      code: 500,
+      message: "Failed to fetch API access key",
       req,
     });
   }
-
-  return res.json({
-    encryptedKeyMaterial: data.encryptedKeyMaterial,
-    encryptedAppMaterial: data.encryptedAppMaterial,
-    id: data.id,
-  });
 }
 
 export default [validate(getValidation), getHandler];
