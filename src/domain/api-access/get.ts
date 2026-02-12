@@ -13,7 +13,7 @@ export const get = async ({
 
   try {
     const doc = await ApiAccessKey.findOne({
-      id: hashedApiKey,
+      encryptedKeyMaterial: hashedApiKey,
     });
     
     if (!doc) {

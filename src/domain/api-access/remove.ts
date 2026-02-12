@@ -6,7 +6,7 @@ export const remove = async ({
   hashedApiKey: string;
 }) => {
   const result = await ApiAccessKey.deleteOne({
-    id: hashedApiKey,
+    encryptedKeyMaterial: hashedApiKey,
   });
   return result;
 };
