@@ -67,3 +67,8 @@ development.env
 
 # dist
 dist/
+
+# IntellIJ
+.idea/
+
+dev-journal.md
