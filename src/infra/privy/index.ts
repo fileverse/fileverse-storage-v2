@@ -1,6 +1,13 @@
 import { PrivyClient, User } from "@privy-io/server-auth";
 import { getUserFidByUsername } from "../../interface/users/neynar-api";
 
+const EMAIL_CACHE_TTL = 60 * 60 * 24; // seconds
+
+type EmailCacheValue = {
+  email: string;
+  address: string;
+};
+
 const getPrivyUserAddress = (user: User | null) => {
   if (!user) return null;
   if (!user.wallet || user.wallet.chainType !== "ethereum") return null;
@@ -10,47 +17,90 @@ const getPrivyUserAddress = (user: User | null) => {
 
 class PrivyWrapper {
   private privyClient: PrivyClient;
+  private emailCache: Map<string, { value: EmailCacheValue; expiresAt: number }>;
 
   constructor() {
     this.privyClient = new PrivyClient(
       process.env.PRIVY_APP_ID as string,
       process.env.PRIVY_SECRET as string
     );
+    this.emailCache = new Map();
+  }
+
+  private getCachedEmail(email: string): EmailCacheValue | null {
+    const entry = this.emailCache.get(email);
+    if (!entry) return null;
+
+    if (entry.expiresAt <= Date.now()) {
+      this.emailCache.delete(email);
+      return null;
+    }
+
+    return entry.value;
+  }
+
+  private setCachedEmail(email: string, value: EmailCacheValue) {
+    this.emailCache.set(email, {
+      value,
+      expiresAt: Date.now() + EMAIL_CACHE_TTL * 1000,
+    });
   }
 
   async importUserByEmail(email: string) {
-    const importedUser = await this.privyClient.importUser({
-      linkedAccounts: [
-        {
-          type: "email",
-          address: email,
-        },
-      ],
-      createEthereumWallet: true,
-    });
-
-    const address = getPrivyUserAddress(importedUser);
-    if (importedUser && address) {
-      return {
-        email: email,
-        address: address,
-      };
+    const cached = this.getCachedEmail(email);
+    if (cached) {
+      return cached;
     }
 
-    return null;
+    try {
+      const importedUser = await this.privyClient.importUser({
+        linkedAccounts: [
+          {
+            type: "email",
+            address: email,
+          },
+        ],
+        createEthereumWallet: true,
+      });
+
+      const address = getPrivyUserAddress(importedUser);
+      if (importedUser && address) {
+        const value: EmailCacheValue = {
+          email: email,
+          address: address,
+        };
+        this.setCachedEmail(email, value);
+        return value;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   async getUsersByEmail(email: string) {
-    const existingUser = await this.privyClient.getUserByEmail(email);
-    const userAddress = getPrivyUserAddress(existingUser);
-    if (existingUser && userAddress) {
-      return {
-        email: email,
-        address: userAddress,
-      };
+    const cached = this.getCachedEmail(email);
+    if (cached) {
+      return cached;
     }
 
-    return null;
+    try {
+      const existingUser = await this.privyClient.getUserByEmail(email);
+      const userAddress = getPrivyUserAddress(existingUser);
+      if (existingUser && userAddress) {
+        const value: EmailCacheValue = {
+          email: email,
+          address: userAddress,
+        };
+        this.setCachedEmail(email, value);
+        return value;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   async getUserByFarcasterUsername(username: string) {
