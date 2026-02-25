@@ -37,12 +37,12 @@ async function address(req: CustomRequest, res: Response) {
     return;
   }
 
-  const foundByEmail = await PrivyInstance.getUsersByEmailsBulk(distinctEmails);
-  for (const [, value] of foundByEmail) {
+  const usersFoundByEmail = await PrivyInstance.getUsersByEmailsBulk(distinctEmails);
+  for (const [, value] of usersFoundByEmail) {
     userAddressResponse.push(value);
   }
 
-  const notFoundEmails = distinctEmails.filter((e) => !foundByEmail.has(e));
+  const notFoundEmails = distinctEmails.filter((e) => !usersFoundByEmail.has(e));
   if (notFoundEmails.length > 0) {
     const { resolved, failed } = await PrivyInstance.importUsersByEmailsBulk(notFoundEmails);
     userAddressResponse.push(...resolved);
