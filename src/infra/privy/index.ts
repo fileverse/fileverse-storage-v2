@@ -74,7 +74,8 @@ class PrivyWrapper {
       }
 
       return null;
-    } catch {
+    } catch (error) {
+      console.error("[Privy] importUserByEmail failed for", email, error);
       return null;
     }
   }
@@ -98,7 +99,8 @@ class PrivyWrapper {
       }
 
       return null;
-    } catch {
+    } catch (error) {
+      console.error("[Privy] getUsersByEmail failed for", email, error);
       return null;
     }
   }
