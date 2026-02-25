@@ -39,14 +39,15 @@ class PrivyWrapper {
 
   async importUserByEmail(email: string): Promise<EmailWithAddress | null> {
     try {
-      const importedUser = await this.privyClient.users().create({
+      const createdUser = await this.privyClient.users().create({
         linked_accounts: [{ type: "email", address: email }],
-        wallets: [{ chain_type: "ethereum" }],
       });
-      const address = getPrivyUserAddress(importedUser);
-      if (importedUser && address) {
-        return { email, address };
-      }
+      const userWithWallet = await this.privyClient.users().pregenerateWallets(
+        createdUser.id,
+        { wallets: [{ chain_type: "ethereum" }] }
+      );
+      const address = getPrivyUserAddress(userWithWallet);
+      if (address) return { email, address };
       return null;
     } catch (error) {
       console.error("[Privy] importUserByEmail failed for", email, error);
@@ -102,11 +103,14 @@ class PrivyWrapper {
       const batch = emails.slice(i, i + BATCH);
       const outcomes = await Promise.allSettled(
         batch.map(async (email) => {
-          const user = await this.privyClient.users().create({
+          const createdUser = await this.privyClient.users().create({
             linked_accounts: [{ type: "email", address: email }],
-            wallets: [{ chain_type: "ethereum" }],
           });
-          return userToEmailWithAddress(user);
+          const userWithWallet = await this.privyClient.users().pregenerateWallets(
+            createdUser.id,
+            { wallets: [{ chain_type: "ethereum" }] }
+          );
+          return userToEmailWithAddress(userWithWallet);
         })
       );
       
