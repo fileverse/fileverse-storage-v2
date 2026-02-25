@@ -1,5 +1,6 @@
 import { PrivyClient, User } from "@privy-io/server-auth";
 import { getUserFidByUsername } from "../../interface/users/neynar-api";
+import { cache } from "../cache";
 
 const EMAIL_CACHE_TTL = 60 * 60 * 24; // seconds
 
@@ -17,37 +18,16 @@ const getPrivyUserAddress = (user: User | null) => {
 
 class PrivyWrapper {
   private privyClient: PrivyClient;
-  private emailCache: Map<string, { value: EmailCacheValue; expiresAt: number }>;
 
   constructor() {
     this.privyClient = new PrivyClient(
       process.env.PRIVY_APP_ID as string,
       process.env.PRIVY_SECRET as string
     );
-    this.emailCache = new Map();
-  }
-
-  private getCachedEmail(email: string): EmailCacheValue | null {
-    const entry = this.emailCache.get(email);
-    if (!entry) return null;
-
-    if (entry.expiresAt <= Date.now()) {
-      this.emailCache.delete(email);
-      return null;
-    }
-
-    return entry.value;
-  }
-
-  private setCachedEmail(email: string, value: EmailCacheValue) {
-    this.emailCache.set(email, {
-      value,
-      expiresAt: Date.now() + EMAIL_CACHE_TTL * 1000,
-    });
   }
 
   async importUserByEmail(email: string) {
-    const cached = this.getCachedEmail(email);
+    const cached = cache.get<EmailCacheValue>(`privy:email:${email}`);
     if (cached) {
       return cached;
     }
@@ -69,7 +49,7 @@ class PrivyWrapper {
           email: email,
           address: address,
         };
-        this.setCachedEmail(email, value);
+        cache.set(`privy:email:${email}`, value, EMAIL_CACHE_TTL);
         return value;
       }
 
@@ -81,7 +61,7 @@ class PrivyWrapper {
   }
 
   async getUsersByEmail(email: string) {
-    const cached = this.getCachedEmail(email);
+    const cached = cache.get<EmailCacheValue>(`privy:email:${email}`);
     if (cached) {
       return cached;
     }
@@ -94,7 +74,7 @@ class PrivyWrapper {
           email: email,
           address: userAddress,
         };
-        this.setCachedEmail(email, value);
+        cache.set(`privy:email:${email}`, value, EMAIL_CACHE_TTL);
         return value;
       }
 
