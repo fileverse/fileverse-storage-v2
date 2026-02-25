@@ -1,5 +1,13 @@
 import { PrivyClient, User } from "@privy-io/server-auth";
 import { getUserFidByUsername } from "../../interface/users/neynar-api";
+import { cache } from "../cache";
+
+const EMAIL_CACHE_TTL = 60 * 60 * 24; // seconds
+
+type EmailCacheValue = {
+  email: string;
+  address: string;
+};
 
 const getPrivyUserAddress = (user: User | null) => {
   if (!user) return null;
@@ -19,38 +27,62 @@ class PrivyWrapper {
   }
 
   async importUserByEmail(email: string) {
-    const importedUser = await this.privyClient.importUser({
-      linkedAccounts: [
-        {
-          type: "email",
-          address: email,
-        },
-      ],
-      createEthereumWallet: true,
-    });
-
-    const address = getPrivyUserAddress(importedUser);
-    if (importedUser && address) {
-      return {
-        email: email,
-        address: address,
-      };
+    const cached = cache.get<EmailCacheValue>(`privy:email:${email}`);
+    if (cached) {
+      return cached;
     }
 
-    return null;
+    try {
+      const importedUser = await this.privyClient.importUser({
+        linkedAccounts: [
+          {
+            type: "email",
+            address: email,
+          },
+        ],
+        createEthereumWallet: true,
+      });
+
+      const address = getPrivyUserAddress(importedUser);
+      if (importedUser && address) {
+        const value: EmailCacheValue = {
+          email: email,
+          address: address,
+        };
+        cache.set(`privy:email:${email}`, value, EMAIL_CACHE_TTL);
+        return value;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("[Privy] importUserByEmail failed for", email, error);
+      return null;
+    }
   }
 
   async getUsersByEmail(email: string) {
-    const existingUser = await this.privyClient.getUserByEmail(email);
-    const userAddress = getPrivyUserAddress(existingUser);
-    if (existingUser && userAddress) {
-      return {
-        email: email,
-        address: userAddress,
-      };
+    const cached = cache.get<EmailCacheValue>(`privy:email:${email}`);
+    if (cached) {
+      return cached;
     }
 
-    return null;
+    try {
+      const existingUser = await this.privyClient.getUserByEmail(email);
+      const userAddress = getPrivyUserAddress(existingUser);
+      if (existingUser && userAddress) {
+        const value: EmailCacheValue = {
+          email: email,
+          address: userAddress,
+        };
+        cache.set(`privy:email:${email}`, value, EMAIL_CACHE_TTL);
+        return value;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("[Privy] getUsersByEmail failed for", email, error);
+      return null;
+    }
   }
 
   async getUserByFarcasterUsername(username: string) {
