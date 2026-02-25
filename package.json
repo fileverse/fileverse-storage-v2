@@ -24,7 +24,7 @@
   "dependencies": {
     "@filebase/sdk": "^1.0.4",
     "@pinata/sdk": "^1.1.26",
-    "@privy-io/server-auth": "^1.26.1",
+    "@privy-io/node": "^0.9.0",
     "@semaphore-protocol/data": "^4.14.0",
     "@semaphore-protocol/group": "^4.13.1",
     "@semaphore-protocol/identity": "^4.13.1",

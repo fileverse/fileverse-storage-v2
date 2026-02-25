@@ -1,4 +1,4 @@
-import { PrivyClient, User } from "@privy-io/server-auth";
+import { PrivyClient, User } from "@privy-io/node";
 import { getUserFidByUsername } from "../../interface/users/neynar-api";
 
 const EMAIL_CACHE_TTL = 60 * 60 * 24; // seconds
@@ -8,11 +8,14 @@ type EmailCacheValue = {
   address: string;
 };
 
-const getPrivyUserAddress = (user: User | null) => {
-  if (!user) return null;
-  if (!user.wallet || user.wallet.chainType !== "ethereum") return null;
-
-  return user.wallet.address;
+const getPrivyUserAddress = (user: User | null): string | null => {
+  if (!user?.linked_accounts) return null;
+  const account = user.linked_accounts.find(
+    (acc) =>
+      (acc.type === "wallet" && "chain_type" in acc && acc.chain_type === "ethereum") ||
+      acc.type === "smart_wallet"
+  );
+  return account && "address" in account ? account.address : null;
 };
 
 class PrivyWrapper {
@@ -20,10 +23,11 @@ class PrivyWrapper {
   private emailCache: Map<string, { value: EmailCacheValue; expiresAt: number }>;
 
   constructor() {
-    this.privyClient = new PrivyClient(
-      process.env.PRIVY_APP_ID as string,
-      process.env.PRIVY_SECRET as string
-    );
+    this.privyClient = new PrivyClient({
+      appId: process.env.PRIVY_APP_ID as string,
+      appSecret: process.env.PRIVY_SECRET as string,
+    });
+
     this.emailCache = new Map();
   }
 
@@ -53,16 +57,11 @@ class PrivyWrapper {
     }
 
     try {
-      const importedUser = await this.privyClient.importUser({
-        linkedAccounts: [
-          {
-            type: "email",
-            address: email,
-          },
-        ],
-        createEthereumWallet: true,
+      const importedUser = await this.privyClient.users().create({
+        linked_accounts: [{ type: "email", address: email }],
+        wallets: [{ chain_type: "ethereum" }],
       });
-
+      
       const address = getPrivyUserAddress(importedUser);
       if (importedUser && address) {
         const value: EmailCacheValue = {
@@ -87,7 +86,9 @@ class PrivyWrapper {
     }
 
     try {
-      const existingUser = await this.privyClient.getUserByEmail(email);
+      const existingUser = await this.privyClient.users().getByEmailAddress({
+        address: email,
+      });
       const userAddress = getPrivyUserAddress(existingUser);
       if (existingUser && userAddress) {
         const value: EmailCacheValue = {
@@ -109,59 +110,66 @@ class PrivyWrapper {
     const fid = await getUserFidByUsername(username);
 
     if (!fid) return null;
-    const existingUser = await this.privyClient.getUserByFarcasterId(fid);
+    try {
+      const existingUser = await this.privyClient.users().getByFarcasterID({
+        fid,
+      });
 
-    const userAddress = getPrivyUserAddress(existingUser);
-    if (existingUser && userAddress) {
-      return {
-        username: username,
-        address: userAddress,
-      };
+      const userAddress = getPrivyUserAddress(existingUser);
+      if (existingUser && userAddress) {
+        return { username, address: userAddress };
+      }
+    } catch (error) {
+      console.error("[Privy] getUserByFarcasterUsername failed for", username, error);
     }
     return null;
   }
 
   async getUserByGithubUsername(username: string) {
-    const existingUser = await this.privyClient.getUserByGithubUsername(
-      username
-    );
-    const userAddress = getPrivyUserAddress(existingUser);
-    if (existingUser && userAddress) {
-      return {
-        username: username,
-        address: userAddress,
-      };
+    try {
+      const existingUser = await this.privyClient.users().getByGitHubUsername({
+        username,
+      });
+      const userAddress = getPrivyUserAddress(existingUser);
+      if (existingUser && userAddress) {
+        return { username, address: userAddress };
+      }
+    } catch (error) {
+      console.error("[Privy] getUserByGithubUsername failed for", username, error);
     }
     return null;
   }
 
   async getUserByDiscordUsername(username: string) {
-    const existingUser = await this.privyClient.getUserByDiscordUsername(
-      username
-    );
-    const userAddress = getPrivyUserAddress(existingUser);
-    if (existingUser && userAddress) {
-      return {
-        username: username,
-        address: userAddress,
-      };
+    try {
+      const existingUser = await this.privyClient.users().getByDiscordUsername({
+        username,
+      });
+      const userAddress = getPrivyUserAddress(existingUser);
+      if (existingUser && userAddress) {
+        return { username, address: userAddress };
+      }
+    } catch (error) {
+      console.error("[Privy] getUserByDiscordUsername failed for", username, error);
     }
     return null;
   }
 
   async getUserByTwitterUsername(username: string) {
-    const existingUser = await this.privyClient.getUserByTwitterUsername(
-      username
-    );
-    const userAddress = getPrivyUserAddress(existingUser);
-    if (existingUser && userAddress) {
-      return {
-        username: username,
-        address: userAddress,
-      };
+    try {
+      const existingUser = await this.privyClient.users().getByTwitterUsername({
+        username,
+      });
+      const userAddress = getPrivyUserAddress(existingUser);
+      if (existingUser && userAddress) {
+        return { username, address: userAddress };
+      }
+    } catch (error) {
+      console.error("[Privy] getUserByTwitterUsername failed for", username, error);
     }
     return null;
   }
+
   async getUserBySocial(platform: string, username: string) {
     switch (platform) {
       case "farcaster":
