@@ -125,6 +125,7 @@ async function use(req: CustomRequest, res: Response) {
         shouldIncludeLegacy: false,
       });
       data.storageLimit += Number(appStorage.storageLimit);
+      data.storageLimit += Number(appStorage.extraStorage);
       data.extraStorage += Number(appStorage.extraStorage);
       data.storageUse += Number(appStorage.storageUse);
     }
