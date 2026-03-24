@@ -7,3 +7,4 @@ export { canUpdateLimit } from "./canUpdateLimit";
 export { canCheckLimitUse } from "./canCheckLimitUse";
 export { isAuthenticated } from "./isAuthenticated";
 export { canDelete } from "./canDelete";
+export { webhookAuth } from "./webhookAuth";
