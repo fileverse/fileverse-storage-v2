@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 
 import router from "./interface";
+import webhookRouter from "./interface/webhook";
 import { expressErrorHandler } from "./interface/middleware";
 import { asyncHandler } from "./infra/asyncHandler";
 import { verify } from "./infra/ucan";
@@ -31,6 +32,7 @@ app.use(
   })
 );
 
+app.use("/webhook", webhookRouter);
 app.use(asyncHandler(verify));
 // This is to check if the service is online or not
 app.use("/ping", function (req, res) {
