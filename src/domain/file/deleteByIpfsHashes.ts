@@ -12,7 +12,7 @@ export const deleteByIpfsHashes = async ({
 }: IDeleteByIpfsHashesParams) => {
   const matchedFiles = await File.find({
     ipfsHash: { $in: ipfsHashes },
-    contractAddress,
+    contractAddress: contractAddress.toLowerCase(),
     isDeleted: false,
   });
 
