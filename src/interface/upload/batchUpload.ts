@@ -2,6 +2,7 @@ import { Response } from "express";
 
 import { uploadOnly } from "../../domain/upload";
 import { create } from "../../domain/file";
+import { File, Limit } from "../../infra/database/models";
 import { CustomRequest, FileIPFSType } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
@@ -38,6 +39,20 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
     });
   }
 
+  // Before the new files are uploaded, we check if any non-deleted CONTENT files
+  // already exists for this appFileId. If they do, we record their total size. 
+  const existingContentFiles = await File.find({
+    appFileId,
+    contractAddress,
+    isDeleted: false,
+    ipfsType: FileIPFSType.CONTENT,
+  }).select("fileSize");
+
+  const existingContentSize = existingContentFiles.reduce(
+    (acc, f) => acc + (f.fileSize || 0),
+    0
+  );
+
   const uploadPromises = files.map((file) =>
     uploadOnly({
       file,
@@ -69,6 +84,16 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
   console.time("db create");
   await Promise.all(dbPromises);
   console.timeEnd("db create");
+
+  // After the new records are created (which increments storageUse for the new version), 
+  // we subtract the old total — so that storage use end up reflecting only the current version.
+  if (existingContentSize > 0) {
+    await Limit.updateOne(
+      { contractAddress },
+      { $inc: { storageUse: -existingContentSize } }
+    );
+  }
+
   const response: IBatchUploadResponse = {
     gateIpfsHash: "",
     contentIpfsHash: "",
