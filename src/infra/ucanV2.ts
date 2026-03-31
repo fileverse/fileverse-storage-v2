@@ -1,20 +1,16 @@
-import { config } from "../config";
 import {
   getCollaboratorKeys,
   getLegacyCollaboratorKeys,
 } from "../domain/contract";
 import { v4 as uuidv4 } from "uuid";
-import * as ucans from "ucans";
 import { Hex } from "viem";
 import { NextFunction, Response } from "express";
 import { ContractMeta, CustomRequest } from "../types";
-
-const serviceDID = config.SERVICE_DID as string;
-
-interface ValidationResult {
-  ok: boolean;
-  actualContractAddress: Hex | null;
-}
+import {
+  ValidationResult,
+  validateInvokerAddress,
+  verifyUcanForContract,
+} from "./ucanUtils";
 
 async function validateContractAddressV2(
   contractMeta: ContractMeta[],
@@ -36,28 +32,13 @@ async function validateContractAddressV2(
         : await getCollaboratorKeys(invokerAddress, contractAddress);
 
     if (invokerDid) {
-      try {
-        const verificationResult = await ucans.verify(token, {
-          audience: serviceDID,
-          requiredCapabilities: [
-            {
-              capability: {
-                with: {
-                  scheme: "storage",
-                  hierPart: contractAddress.toLowerCase(),
-                },
-                can: { namespace: "file", segments: ["CREATE"] },
-              },
-              rootIssuer: invokerDid as string,
-            },
-          ],
-        });
-
-        result.ok = verificationResult.ok;
-        result.actualContractAddress = contractAddress;
-      } catch (err) {
-        console.error("Error verifying UCAN with contract address:", err);
-      }
+      const verificationResult = await verifyUcanForContract(
+        token,
+        contractAddress,
+        invokerDid as string
+      );
+      result.ok = verificationResult.ok;
+      result.actualContractAddress = verificationResult.actualContractAddress;
     }
 
     if (result.ok) {
@@ -68,26 +49,6 @@ async function validateContractAddressV2(
   return result;
 }
 
-async function validateInvokerAddress(invokerAddress: Hex, token: string) {
-  try {
-    const result = await ucans.verify(token, {
-      audience: serviceDID,
-      requiredCapabilities: [
-        {
-          capability: {
-            with: { scheme: "storage", hierPart: invokerAddress },
-            can: { namespace: "file", segments: ["CREATE", "GET"] },
-          },
-          rootIssuer: invokerAddress,
-        },
-      ],
-    });
-    return result.ok;
-  } catch (error) {
-    console.error("Error verifying UCAN with invoker address:", error);
-    return false;
-  }
-}
 
 const verifyV2 = async (
   req: CustomRequest,
