@@ -67,3 +67,13 @@ development.env
 
 # dist
 dist/
+
+# IntellIJ
+.idea/
+
+# markdown
+dev-journal.md
+
+# docs-personal
+docs-personal/
+

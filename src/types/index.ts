@@ -15,6 +15,12 @@ import {
   WaitForUserOperationReceiptReturnType,
 } from "viem/account-abstraction";
 import { Document, Types } from "mongoose";
+
+export interface ContractMeta {
+  contractAddress: `0x${string}`;
+  version: "v1" | "v2";
+}
+
 export interface CustomRequest extends Request {
   requestId?: string;
   isAuthenticated?: boolean;
@@ -23,6 +29,7 @@ export interface CustomRequest extends Request {
   chainId?: string | null;
   address?: string;
   contractAddresses?: string[] | null;
+  contractMeta?: ContractMeta[] | null;
 }
 
 export enum FileIPFSType {

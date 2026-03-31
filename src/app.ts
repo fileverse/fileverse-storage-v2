@@ -4,10 +4,12 @@ import cors from "cors";
 import helmet from "helmet";
 
 import router from "./interface";
+import v2Router from "./interface/v2";
 import webhookRouter from "./interface/webhook";
 import { expressErrorHandler } from "./interface/middleware";
 import { asyncHandler } from "./infra/asyncHandler";
 import { verify } from "./infra/ucan";
+import { verifyV2 } from "./infra/ucanV2";
 
 // Express App
 const app = express();
@@ -32,15 +34,15 @@ app.use(
   })
 );
 
+// This /webhook route has a separate auth check
 app.use("/webhook", webhookRouter);
-app.use(asyncHandler(verify));
-// This is to check if the service is online or not
 app.use("/ping", function (req, res) {
   res.json({ reply: "pong" });
   res.end();
 });
 
-app.use("/", router);
+app.use("/api/v2", asyncHandler(verifyV2), v2Router);
+app.use("/", asyncHandler(verify), router);
 
 app.use(expressErrorHandler as express.ErrorRequestHandler);
 

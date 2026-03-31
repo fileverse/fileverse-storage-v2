@@ -1,29 +1,20 @@
-import { getStorageUse, getLegacyStorageUse } from "../../domain/limit";
-import { validate, Joi } from "../middleware";
-import { CustomRequest } from "../../types";
+import { getStorageUse, getLegacyStorageUse } from "../../../domain/limit";
+import { validate, Joi } from "../../middleware";
+import { CustomRequest } from "../../../types";
 import { Response } from "express";
-import { throwError } from "../../infra/errorHandler";
+import { throwError } from "../../../infra/errorHandler";
 
-import { isLegacyContract } from "../../domain/contract";
-import { Hex } from "viem";
-
-const useValidation = {
+const useV2Validation = {
   headers: Joi.object({
-    contract: Joi.string().required(),
-    invoker: Joi.string().required(),
-    chain: Joi.string().required(),
+    "x-contract-meta": Joi.string().required(),
+    "x-invoker-address": Joi.string().required(),
   }).unknown(true),
 };
 
 async function use(req: CustomRequest, res: Response) {
-  const { invokerAddress, chainId, contractAddresses } = req;
+  const { invokerAddress, chainId, contractMeta } = req;
 
-  if (
-    !contractAddresses ||
-    contractAddresses.length === 0 ||
-    !invokerAddress ||
-    !chainId
-  ) {
+  if (!contractMeta || contractMeta.length === 0 || !invokerAddress || !chainId) {
     return throwError({
       code: 400,
       message: "Invalid request",
@@ -31,20 +22,24 @@ async function use(req: CustomRequest, res: Response) {
     });
   }
 
+  const allContracts = contractMeta.map((m) => m.contractAddress);
+
   const data = {
     storageLimit: 0,
     extraStorage: 0,
     storageUse: 0,
     unit: "bytes",
-    contractAddress: contractAddresses.join(","),
+    contractAddress: allContracts.join(","),
   };
 
-  for (const contractAddress of contractAddresses) {
-    const isLegacy = await isLegacyContract(contractAddress as Hex);
+  for (const meta of contractMeta) {
+    const { contractAddress, version } = meta;
+    const isLegacy = version === "v1";
+
     if (isLegacy) {
       const legacyStorage = await getLegacyStorageUse({
         contractAddress,
-        allContracts: contractAddresses,
+        allContracts,
         invokerAddress,
       });
 
@@ -59,7 +54,6 @@ async function use(req: CustomRequest, res: Response) {
         shouldIncludeLegacy: false,
       });
       data.storageLimit += Number(appStorage.storageLimit);
-      data.storageLimit += Number(appStorage.extraStorage);
       data.extraStorage += Number(appStorage.extraStorage);
       data.storageUse += Number(appStorage.storageUse);
     }
@@ -71,4 +65,4 @@ async function use(req: CustomRequest, res: Response) {
   });
 }
 
-export default [validate(useValidation), use];
+export default [validate(useV2Validation), use];
