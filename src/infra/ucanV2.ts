@@ -9,7 +9,7 @@ import { ContractMeta, CustomRequest } from "../types";
 import {
   ValidationResult,
   validateInvokerAddress,
-  verifyUcanForContract,
+  validateContracts,
 } from "./ucanUtils";
 
 async function validateContractAddressV2(
@@ -17,36 +17,16 @@ async function validateContractAddressV2(
   invokerAddress: Hex,
   token: string
 ): Promise<ValidationResult> {
-  const result: ValidationResult = {
-    ok: false,
-    actualContractAddress: null,
-  };
-
-  for (const meta of contractMeta) {
-    const { contractAddress, version } = meta;
-
+  const contracts = [];
+  for (const { contractAddress, version } of contractMeta) {
     // Use version from meta to pick the right resolver — no on-chain isLegacy check needed
     const invokerDid =
       version === "v1"
         ? await getLegacyCollaboratorKeys(invokerAddress, contractAddress)
         : await getCollaboratorKeys(invokerAddress, contractAddress);
-
-    if (invokerDid) {
-      const verificationResult = await verifyUcanForContract(
-        token,
-        contractAddress,
-        invokerDid as string
-      );
-      result.ok = verificationResult.ok;
-      result.actualContractAddress = verificationResult.actualContractAddress;
-    }
-
-    if (result.ok) {
-      return result;
-    }
+    contracts.push({ contractAddress, invokerDid: invokerDid as string | null });
   }
-
-  return result;
+  return validateContracts(contracts, token);
 }
 
 

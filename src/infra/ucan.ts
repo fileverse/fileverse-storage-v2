@@ -10,7 +10,7 @@ import { CustomRequest } from "../types";
 import {
   ValidationResult,
   validateInvokerAddress,
-  verifyUcanForContract,
+  validateContracts,
 } from "./ucanUtils";
 
 async function validateContractAddress(
@@ -18,43 +18,18 @@ async function validateContractAddress(
   invokerAddress: Hex,
   token: string
 ) {
-  let invokerDid = null;
-
-  const result: ValidationResult = {
-    ok: false,
-    actualContractAddress: null,
-  };
-
+  const contracts = [];
   for (const contractAddress of contractAddresses) {
     const isLegacy = await isLegacyContract(contractAddress);
-
-    invokerDid = isLegacy
+    let invokerDid = isLegacy
       ? await getLegacyCollaboratorKeys(invokerAddress, contractAddress)
       : await getCollaboratorKeys(invokerAddress, contractAddress);
-
     if (!invokerDid) {
-      invokerDid = await getLegacyCollaboratorKeys(
-        invokerAddress,
-        contractAddress
-      );
+      invokerDid = await getLegacyCollaboratorKeys(invokerAddress, contractAddress);
     }
-
-    if (invokerDid) {
-      const verificationResult = await verifyUcanForContract(
-        token,
-        contractAddress,
-        invokerDid as string
-      );
-      result.ok = verificationResult.ok;
-      result.actualContractAddress = verificationResult.actualContractAddress;
-    }
-
-    if (result.ok) {
-      return result;
-    }
+    contracts.push({ contractAddress, invokerDid: invokerDid as string | null });
   }
-
-  return result;
+  return validateContracts(contracts, token);
 }
 
 

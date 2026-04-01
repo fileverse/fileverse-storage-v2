@@ -33,6 +33,26 @@ export async function validateInvokerAddress(
   }
 }
 
+export async function validateContracts(
+  contracts: Array<{ contractAddress: string; invokerDid: string | null }>,
+  token: string
+): Promise<ValidationResult> {
+  const result: ValidationResult = { ok: false, actualContractAddress: null };
+  for (const { contractAddress, invokerDid } of contracts) {
+    if (invokerDid) {
+      const verificationResult = await verifyUcanForContract(
+        token,
+        contractAddress,
+        invokerDid
+      );
+      result.ok = verificationResult.ok;
+      result.actualContractAddress = verificationResult.actualContractAddress;
+    }
+    if (result.ok) return result;
+  }
+  return result;
+}
+
 export async function verifyUcanForContract(
   token: string,
   contractAddress: string,
