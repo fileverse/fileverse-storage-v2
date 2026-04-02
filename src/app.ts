@@ -9,7 +9,6 @@ import webhookRouter from "./interface/webhook";
 import { expressErrorHandler } from "./interface/middleware";
 import { asyncHandler } from "./infra/asyncHandler";
 import { verify } from "./infra/ucan";
-import { verifyV2 } from "./infra/ucanV2";
 
 // Express App
 const app = express();
@@ -41,7 +40,7 @@ app.use("/ping", function (req, res) {
   res.end();
 });
 
-app.use("/api/v2", asyncHandler(verifyV2), v2Router);
+app.use("/api/v2", v2Router);
 app.use("/", asyncHandler(verify), router);
 
 app.use(expressErrorHandler as express.ErrorRequestHandler);
