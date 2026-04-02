@@ -17,8 +17,12 @@ async function validateContractAddressV2(
   invokerAddress: Hex,
   token: string
 ): Promise<ValidationResult> {
+  const metaToValidate = contractMeta.some((m) => m.version !== "v1")
+    ? contractMeta.filter((m) => m.version !== "v1")
+    : contractMeta;
+
   const contracts = [];
-  for (const { contractAddress, version } of contractMeta) {
+  for (const { contractAddress, version } of metaToValidate) {
     // Use version from meta to pick the right resolver — no on-chain isLegacy check needed
     const invokerDid =
       version === "v1"
