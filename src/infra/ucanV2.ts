@@ -11,6 +11,7 @@ import {
   validateInvokerAddress,
   validateContracts,
 } from "./ucanUtils";
+import { throwError } from "./errorHandler";
 
 async function validateContractAddressV2(
   contractMeta: ContractMeta[],
@@ -48,16 +49,17 @@ const verifyV2 = async (
   req.invokerAddress = invokerAddress;
   req.chainId = chainId;
 
+  if (!contractMetaHeader) {
+    return throwError({ code: 401, message: "Unauthorized", req });
+  }
+
   let contractMeta: ContractMeta[] = [];
-  if (contractMetaHeader) {
-    try {
-      const decoded = Buffer.from(contractMetaHeader, "base64").toString(
-        "utf-8"
-      );
-      contractMeta = JSON.parse(decoded) as ContractMeta[];
-    } catch (err) {
-      console.error("Failed to decode x-contract-meta header:", err);
-    }
+  try {
+    const decoded = Buffer.from(contractMetaHeader, "base64").toString("utf-8");
+    contractMeta = JSON.parse(decoded) as ContractMeta[];
+  } catch (err) {
+    console.error("Failed to decode x-contract-meta header:", err);
+    return throwError({ code: 401, message: "Invalid x-contract-meta header: expected base64-encoded JSON", req });
   }
 
   req.contractMeta = contractMeta;
