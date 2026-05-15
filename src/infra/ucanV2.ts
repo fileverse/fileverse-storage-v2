@@ -10,8 +10,10 @@ import {
   ValidationResult,
   validateInvokerAddress,
   validateContracts,
+  verifyUcanForContract,
 } from "./ucanUtils";
 import { throwError } from "./errorHandler";
+import { cache } from "./cache";
 
 async function validateContractAddressV2(
   contractMeta: ContractMeta[],
@@ -29,9 +31,45 @@ async function validateContractAddressV2(
       version === "v1"
         ? await getLegacyCollaboratorKeys(invokerAddress, contractAddress)
         : await getCollaboratorKeys(invokerAddress, contractAddress);
-    contracts.push({ contractAddress, invokerDid: invokerDid as string | null });
+    contracts.push({
+      contractAddress,
+      version,
+      invokerDid: invokerDid as string | null,
+    });
   }
-  return validateContracts(contracts, token);
+
+  const firstAttempt = await validateContracts(
+    contracts.map(({ contractAddress, invokerDid }) => ({
+      contractAddress,
+      invokerDid,
+    })),
+    token
+  );
+  if (firstAttempt.ok) return firstAttempt;
+
+  // Verify-on-mismatch: a cached collaborator DID may be stale after an
+  // on-chain rotation (e.g. member-removal). Bust the cache key and refetch
+  // once with a fresh chain read; retry verification only when the DID has
+  // actually changed. Steady-state uploads never reach this branch.
+  for (const { contractAddress, version, invokerDid: cachedDid } of contracts) {
+    cache.del(`collaboratorKeys:${invokerAddress}:${contractAddress}`);
+    const freshDid =
+      version === "v1"
+        ? await getLegacyCollaboratorKeys(invokerAddress, contractAddress, {
+            bypassCache: true,
+          })
+        : await getCollaboratorKeys(invokerAddress, contractAddress, {
+            bypassCache: true,
+          });
+    if (!freshDid || freshDid === cachedDid) continue;
+    const retryResult = await verifyUcanForContract(
+      token,
+      contractAddress,
+      freshDid as string
+    );
+    if (retryResult.ok) return retryResult;
+  }
+  return firstAttempt;
 }
 
 
@@ -93,4 +131,4 @@ const verifyV2 = async (
   next();
 };
 
-export { verifyV2 };
+export { verifyV2, validateContractAddressV2 };

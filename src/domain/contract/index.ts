@@ -9,13 +9,16 @@ const CACHE_TTL = 60 * 60 * 24; // 1 day
 
 const getCollaboratorKeys = async (
   collaboratorAddress: Hex,
-  portalAddress: Hex
+  portalAddress: Hex,
+  opts?: { bypassCache?: boolean }
 ) => {
   try {
     const cacheKey = `collaboratorKeys:${collaboratorAddress}:${portalAddress}`;
-    const cachedResult = await cache.get(cacheKey);
-    if (cachedResult) {
-      return cachedResult;
+    if (!opts?.bypassCache) {
+      const cachedResult = await cache.get(cacheKey);
+      if (cachedResult) {
+        return cachedResult;
+      }
     }
 
     const result = (await publicClient.readContract({
@@ -36,14 +39,17 @@ const getCollaboratorKeys = async (
 
 const getLegacyCollaboratorKeys = async (
   collaboratorAddress: Hex,
-  portalAddress: Hex
+  portalAddress: Hex,
+  opts?: { bypassCache?: boolean }
 ) => {
   try {
     const cacheKey = `collaboratorKeys:${collaboratorAddress}:${portalAddress}`;
-    const cachedResult = await cache.get(cacheKey);
-    if (cachedResult) {
-      console.log("did:cached result");
-      return cachedResult;
+    if (!opts?.bypassCache) {
+      const cachedResult = await cache.get(cacheKey);
+      if (cachedResult) {
+        console.log("did:cached result");
+        return cachedResult;
+      }
     }
 
     const result =
