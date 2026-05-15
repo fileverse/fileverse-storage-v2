@@ -12,6 +12,7 @@ import { cache } from "./cache";
 import * as ucans from "ucans";
 import { ContractMeta } from "../types";
 import { portalAbi } from "../domain/contract/abi";
+import { legacyPortalContractAbi } from "../domain/contract/legacy-portal-contract-abi";
 import { validateContractAddressV2 } from "./ucanV2";
 
 describe("validateContractAddressV2 — verify-on-mismatch", () => {
@@ -89,6 +90,60 @@ describe("validateContractAddressV2 — verify-on-mismatch", () => {
     expect(cacheDel).not.toHaveBeenCalled();
     expect(cacheSet).not.toHaveBeenCalled();
     expect(result).toEqual({ ok: true, actualContractAddress: PORTAL });
+  });
+
+  it("v1 legacy path: stale cache + rotation, retry succeeds via legacy abi", async () => {
+    const legacyMeta: ContractMeta[] = [
+      { contractAddress: PORTAL, version: "v1" },
+    ];
+    const token = "ucan-signed-by-new-did-legacy";
+    const legacyReadContractArgs = {
+      address: PORTAL,
+      abi: legacyPortalContractAbi,
+      functionName: "collaboratorKeys",
+      args: [INVOKER],
+    };
+
+    cacheGet.mockResolvedValueOnce(OLD_DID);
+    ucansVerify
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: true });
+    // Legacy collaboratorKeys returns a tuple [ethAddr, did]; only [1] is used.
+    readContract.mockResolvedValueOnce(["0xdeadbeef", NEW_DID]);
+
+    const result = await validateContractAddressV2(legacyMeta, INVOKER, token);
+
+    expect(cacheGet).toHaveBeenCalledWith(CACHE_KEY);
+    expect(ucansVerify).toHaveBeenNthCalledWith(1, token, verifyArgsFor(OLD_DID));
+    expect(cacheDel).toHaveBeenCalledWith(CACHE_KEY);
+    expect(readContract).toHaveBeenCalledWith(legacyReadContractArgs);
+    expect(cacheSet).toHaveBeenCalledWith(CACHE_KEY, NEW_DID, CACHE_TTL_SECONDS);
+    expect(ucansVerify).toHaveBeenNthCalledWith(2, token, verifyArgsFor(NEW_DID));
+    expect(ucansVerify).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ ok: true, actualContractAddress: PORTAL });
+  });
+
+  it("chain failure during retry: readContract throws, retry is skipped, failure propagates", async () => {
+    const token = "ucan-signed-by-new-did";
+    const consoleError = jest.spyOn(console, "error").mockImplementation();
+    cacheGet.mockResolvedValueOnce(OLD_DID);
+    ucansVerify.mockResolvedValueOnce({ ok: false });
+    readContract.mockRejectedValueOnce(new Error("RPC timeout"));
+
+    const result = await validateContractAddressV2(META, INVOKER, token);
+
+    // Execution order: cache.get → verify (OLD_DID, fails) → cache.del →
+    // readContract (throws) → getCollaboratorKeys catches and returns null →
+    // loop continues because !freshDid → no second verify call → return failure.
+    expect(cacheGet).toHaveBeenCalledWith(CACHE_KEY);
+    expect(ucansVerify).toHaveBeenCalledWith(token, verifyArgsFor(OLD_DID));
+    expect(cacheDel).toHaveBeenCalledWith(CACHE_KEY);
+    expect(readContract).toHaveBeenCalledWith(readContractArgs);
+    expect(cacheSet).not.toHaveBeenCalled();
+    expect(ucansVerify).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ ok: false, actualContractAddress: PORTAL });
+    expect(consoleError).toHaveBeenCalledWith(expect.any(Error));
+    consoleError.mockRestore();
   });
 
   it("no actual rotation: cached DID still matches chain, verification still fails", async () => {
