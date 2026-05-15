@@ -1,111 +1,113 @@
-process.env.SERVICE_DID =
-  process.env.SERVICE_DID || "did:key:zTestService";
-
 jest.mock("../domain/contract/viemClient", () => ({
   publicClient: { readContract: jest.fn() },
 }));
-
 jest.mock("./cache", () => ({
-  cache: {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-  },
+  cache: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
 }));
-
-jest.mock("ucans", () => ({
-  verify: jest.fn(),
-}));
+jest.mock("ucans", () => ({ verify: jest.fn() }));
 
 import { Hex } from "viem";
 import { publicClient } from "../domain/contract/viemClient";
 import { cache } from "./cache";
 import * as ucans from "ucans";
 import { ContractMeta } from "../types";
+import { portalAbi } from "../domain/contract/abi";
 import { validateContractAddressV2 } from "./ucanV2";
 
-const readContract = publicClient.readContract as jest.Mock;
-const cacheGet = cache.get as jest.Mock;
-const cacheSet = cache.set as jest.Mock;
-const cacheDel = cache.del as jest.Mock;
-const ucansVerify = ucans.verify as jest.Mock;
-
-const INVOKER: Hex = "0x56D2000f7cFf923E74388E6185128741cd063A23";
-const PORTAL: Hex = "0x1A592FAf20Dd976fcbb5Fc829d504F2bfbE87E3B";
-const OLD_DID = "did:key:zOldStaleDid";
-const NEW_DID = "did:key:zNewRotatedDid";
-const SIGNED_BY_NEW_DID = "ucan-token-signed-by-new-did";
-const CACHE_KEY = `collaboratorKeys:${INVOKER}:${PORTAL}`;
-const META: ContractMeta[] = [{ contractAddress: PORTAL, version: "v2" }];
-
-// ucans.verify is called by both validateContracts (first attempt) and
-// verifyUcanForContract (retry). Both pass `rootIssuer` in the requested
-// capabilities; treat verification as ok only when rootIssuer matches the
-// DID the token was signed with.
-const verifierFor = (signerDid: string) => (_token: string, opts: any) => {
-  const rootIssuer = opts.requiredCapabilities[0].rootIssuer;
-  return { ok: rootIssuer === signerDid };
-};
-
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
 describe("validateContractAddressV2 — verify-on-mismatch", () => {
-  test("stale cache + on-chain rotation: busts cache, refetches, retries, succeeds", async () => {
-    cacheGet.mockResolvedValueOnce(OLD_DID); // cache hit on first fetch
-    readContract.mockResolvedValueOnce(NEW_DID); // bypass-cache refetch
-    ucansVerify.mockImplementation(verifierFor(NEW_DID));
+  const readContract = publicClient.readContract as jest.Mock;
+  const cacheGet = cache.get as jest.Mock;
+  const cacheSet = cache.set as jest.Mock;
+  const cacheDel = cache.del as jest.Mock;
+  const ucansVerify = ucans.verify as jest.Mock;
 
-    const result = await validateContractAddressV2(
-      META,
-      INVOKER,
-      SIGNED_BY_NEW_DID
-    );
+  const INVOKER: Hex = "0x56D2000f7cFf923E74388E6185128741cd063A23";
+  const PORTAL: Hex = "0x1A592FAf20Dd976fcbb5Fc829d504F2bfbE87E3B";
+  const OLD_DID = "did:key:zOldStaleDid";
+  const NEW_DID = "did:key:zNewRotatedDid";
+  const CACHE_KEY = `collaboratorKeys:${INVOKER}:${PORTAL}`;
+  const CACHE_TTL_SECONDS = 60 * 60 * 24;
+  const META: ContractMeta[] = [{ contractAddress: PORTAL, version: "v2" }];
 
-    expect(result.ok).toBe(true);
-    expect(result.actualContractAddress).toBe(PORTAL);
-    expect(cacheDel).toHaveBeenCalledWith(CACHE_KEY);
-    expect(readContract).toHaveBeenCalledTimes(1);
-    // After fresh read, fresh DID is written back so future requests skip the chain.
-    expect(cacheSet).toHaveBeenCalledWith(
-      CACHE_KEY,
-      NEW_DID,
-      expect.any(Number)
-    );
+  const verifyArgsFor = (rootIssuer: string) => ({
+    audience: "did:key:zTestService",
+    requiredCapabilities: [
+      {
+        capability: {
+          with: { scheme: "storage", hierPart: PORTAL.toLowerCase() },
+          can: { namespace: "file", segments: ["CREATE"] },
+        },
+        rootIssuer,
+      },
+    ],
   });
 
-  test("steady-state cache hit: no chain read, no cache bust", async () => {
+  const readContractArgs = {
+    address: PORTAL,
+    abi: portalAbi,
+    functionName: "collaboratorKeys",
+    args: [INVOKER],
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("stale cache + on-chain rotation: busts cache, refetches, retries, succeeds", async () => {
+    const token = "ucan-signed-by-new-did";
+    cacheGet.mockResolvedValueOnce(OLD_DID);
+    ucansVerify
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: true });
+    readContract.mockResolvedValueOnce(NEW_DID);
+
+    const result = await validateContractAddressV2(META, INVOKER, token);
+
+    // Execution order: cache.get → verify (OLD_DID, fails) → cache.del →
+    // readContract → cache.set → verify (NEW_DID, succeeds) → return.
+    expect(cacheGet).toHaveBeenCalledWith(CACHE_KEY);
+    expect(ucansVerify).toHaveBeenNthCalledWith(1, token, verifyArgsFor(OLD_DID));
+    expect(cacheDel).toHaveBeenCalledWith(CACHE_KEY);
+    expect(readContract).toHaveBeenCalledWith(readContractArgs);
+    expect(cacheSet).toHaveBeenCalledWith(CACHE_KEY, NEW_DID, CACHE_TTL_SECONDS);
+    expect(ucansVerify).toHaveBeenNthCalledWith(2, token, verifyArgsFor(NEW_DID));
+    expect(ucansVerify).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ ok: true, actualContractAddress: PORTAL });
+  });
+
+  it("steady-state cache hit: no chain read, no cache bust", async () => {
+    const token = "ucan-signed-by-cached-did";
     cacheGet.mockResolvedValueOnce(NEW_DID);
-    ucansVerify.mockImplementation(verifierFor(NEW_DID));
+    ucansVerify.mockResolvedValueOnce({ ok: true });
 
-    const result = await validateContractAddressV2(
-      META,
-      INVOKER,
-      SIGNED_BY_NEW_DID
-    );
+    const result = await validateContractAddressV2(META, INVOKER, token);
 
-    expect(result.ok).toBe(true);
+    expect(cacheGet).toHaveBeenCalledWith(CACHE_KEY);
+    expect(ucansVerify).toHaveBeenCalledWith(token, verifyArgsFor(NEW_DID));
+    expect(ucansVerify).toHaveBeenCalledTimes(1);
     expect(readContract).not.toHaveBeenCalled();
     expect(cacheDel).not.toHaveBeenCalled();
+    expect(cacheSet).not.toHaveBeenCalled();
+    expect(result).toEqual({ ok: true, actualContractAddress: PORTAL });
   });
 
-  test("no actual rotation: cached DID still matches chain, verification still fails", async () => {
-    cacheGet.mockResolvedValueOnce(OLD_DID); // cache hit
-    readContract.mockResolvedValueOnce(OLD_DID); // chain agrees — no rotation happened
-    ucansVerify.mockImplementation(verifierFor("did:key:zSomeOtherDid"));
+  it("no actual rotation: cached DID still matches chain, verification still fails", async () => {
+    const token = "ucan-with-mismatched-issuer";
+    cacheGet.mockResolvedValueOnce(OLD_DID);
+    ucansVerify.mockResolvedValueOnce({ ok: false });
+    readContract.mockResolvedValueOnce(OLD_DID);
 
-    const result = await validateContractAddressV2(
-      META,
-      INVOKER,
-      "ucan-token-with-mismatched-issuer"
-    );
+    const result = await validateContractAddressV2(META, INVOKER, token);
 
-    expect(result.ok).toBe(false);
+    // Execution order: cache.get → verify (OLD_DID, fails) → cache.del →
+    // readContract (returns OLD_DID, same as cached) → cache.set → loop
+    // continues because freshDid === cachedDid → no second verify call → return failure.
+    expect(cacheGet).toHaveBeenCalledWith(CACHE_KEY);
+    expect(ucansVerify).toHaveBeenCalledWith(token, verifyArgsFor(OLD_DID));
     expect(cacheDel).toHaveBeenCalledWith(CACHE_KEY);
-    expect(readContract).toHaveBeenCalledTimes(1);
-    // Same DID after refetch → verifyUcanForContract is NOT called a second time.
-    // The first attempt's verify call already produced a definitive failure.
+    expect(readContract).toHaveBeenCalledWith(readContractArgs);
+    expect(cacheSet).toHaveBeenCalledWith(CACHE_KEY, OLD_DID, CACHE_TTL_SECONDS);
     expect(ucansVerify).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ ok: false, actualContractAddress: PORTAL });
   });
 });
