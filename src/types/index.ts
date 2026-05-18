@@ -21,6 +21,11 @@ export interface ContractMeta {
   version: "v1" | "v2";
 }
 
+export enum BucketTier {
+  PERSONAL = "personal",
+  WORKSPACE = "workspace",
+}
+
 export interface CustomRequest extends Request {
   requestId?: string;
   isAuthenticated?: boolean;
@@ -30,6 +35,7 @@ export interface CustomRequest extends Request {
   address?: string;
   contractAddresses?: string[] | null;
   contractMeta?: ContractMeta[] | null;
+  bucketTier?: BucketTier | null;
 }
 
 export enum FileIPFSType {

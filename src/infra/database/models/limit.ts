@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import { config } from "../../../config";
+import { BucketTier } from "../../../types";
 
 const limitSchema = new Schema({
   contractAddress: {
@@ -14,6 +15,11 @@ const limitSchema = new Schema({
     required: false,
     index: true,
     default: null,
+  },
+  tier: {
+    type: String,
+    enum: Object.values(BucketTier),
+    default: BucketTier.PERSONAL,
   },
   storageLimit: {
     type: Schema.Types.Decimal128,

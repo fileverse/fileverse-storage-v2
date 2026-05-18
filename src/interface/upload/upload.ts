@@ -4,6 +4,7 @@ import { upload } from "../../domain";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
+import { readBucketTier } from "../../infra/bucketTier";
 
 const uploadValidation = {
   headers: Joi.object({
@@ -18,6 +19,7 @@ const uploadFn = async (req: CustomRequest, res: Response) => {
   const { contractAddress, invokerAddress } = req;
   const { tags } = req.query;
   const { appFileId, sourceApp, ipfsType } = req.body;
+  const tier = readBucketTier(req);
 
   const file = isArray(req.files?.file) ? req.files?.file[0] : req.files?.file;
   if (!contractAddress || !invokerAddress || !file) {
@@ -35,6 +37,7 @@ const uploadFn = async (req: CustomRequest, res: Response) => {
     invokerAddress,
     file: file,
     tags: tags as string[],
+    tier,
   }).catch(console.log);
 
   res.json(createdFile);

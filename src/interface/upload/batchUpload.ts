@@ -5,6 +5,7 @@ import { create } from "../../domain/file";
 import { CustomRequest, FileIPFSType } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
+import { readBucketTier } from "../../infra/bucketTier";
 
 const batchUploadValidation = {
   headers: Joi.object({
@@ -29,6 +30,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
   const { contractAddress, invokerAddress } = req;
   const files = Array.isArray(req.files?.files) ? req.files?.files : [];
   const { appFileId, sourceApp } = req.body;
+  const tier = readBucketTier(req);
 
   if (!contractAddress || !invokerAddress || !files || files?.length === 0) {
     return throwError({
@@ -64,6 +66,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
       tags: [],
       sourceApp,
       ipfsType: ipfsFile.ipfsType,
+      tier,
     })
   );
   console.time("db create");
