@@ -8,28 +8,126 @@ import { Hex } from "viem";
 import { NextFunction, Response } from "express";
 import { CustomRequest } from "../types";
 import {
-  ValidationResult,
   validateInvokerAddress,
   validateContracts,
+  extractClaimedRootIssuer,
 } from "./ucanUtils";
+import { cache } from "./cache";
+
+type Fetcher = "current" | "legacy" | null;
 
 async function validateContractAddress(
   contractAddresses: Hex[],
   invokerAddress: Hex,
   token: string
 ) {
-  const contracts = [];
+  const contracts: Array<{
+    contractAddress: Hex;
+    invokerDid: string | null;
+    fetcher: Fetcher;
+    isLegacy: boolean;
+  }> = [];
+
   for (const contractAddress of contractAddresses) {
-    const isLegacy = await isLegacyContract(contractAddress);
-    let invokerDid = isLegacy
-      ? await getLegacyCollaboratorKeys(invokerAddress, contractAddress)
-      : await getCollaboratorKeys(invokerAddress, contractAddress);
-    if (!invokerDid) {
-      invokerDid = await getLegacyCollaboratorKeys(invokerAddress, contractAddress);
+    const isLegacy = Boolean(await isLegacyContract(contractAddress));
+    let invokerDid: string | null;
+    let fetcher: Fetcher;
+
+    if (isLegacy) {
+      invokerDid = (await getLegacyCollaboratorKeys(
+        invokerAddress,
+        contractAddress
+      )) as string | null;
+      fetcher = invokerDid ? "legacy" : null;
+    } else {
+      invokerDid = (await getCollaboratorKeys(
+        invokerAddress,
+        contractAddress
+      )) as string | null;
+      fetcher = invokerDid ? "current" : null;
+      if (!invokerDid) {
+        invokerDid = (await getLegacyCollaboratorKeys(
+          invokerAddress,
+          contractAddress
+        )) as string | null;
+        fetcher = invokerDid ? "legacy" : null;
+      }
     }
-    contracts.push({ contractAddress, invokerDid: invokerDid as string | null });
+
+    contracts.push({ contractAddress, invokerDid, fetcher, isLegacy });
   }
-  return validateContracts(contracts, token);
+
+  const firstAttempt = await validateContracts(
+    contracts.map(({ contractAddress, invokerDid }) => ({
+      contractAddress,
+      invokerDid,
+    })),
+    token
+  );
+  if (firstAttempt.ok) return firstAttempt;
+
+  // Guarded refetch: a cached collaborator DID may be stale after an on-chain
+  // key rotation. Only re-read on-chain when the token's claimed issuer
+  // doesn't match the cached DID — i.e. the rotation signature. This avoids
+  // RPC amplification on genuinely invalid tokens.
+  const claimedIssuer = extractClaimedRootIssuer(token);
+  if (!claimedIssuer) return firstAttempt;
+
+  // If every contract's DID is already known and the claimed issuer matches
+  // one of them, the token is "for" a known collaborator and verify failed
+  // for a non-rotation reason (capability mismatch, expired, etc.). Skip the
+  // refetch. We require every entry to be known because a null cache slot is
+  // itself "haven't looked yet" — a newly-added collaborator on another
+  // portal would otherwise stay invisible.
+  const allCachedKnown = contracts.every((c) => c.invokerDid !== null);
+  if (
+    allCachedKnown &&
+    contracts.some((c) => c.invokerDid?.toLocaleLowerCase() === claimedIssuer?.toLocaleLowerCase())
+  ) {
+    return firstAttempt;
+  }
+
+  let anyRefetched = false;
+  const refreshed: Array<{ contractAddress: Hex; invokerDid: string | null }> =
+    [];
+
+  for (const { contractAddress, invokerDid: cachedDid, fetcher, isLegacy } of contracts) {
+    if (cachedDid && cachedDid.toLocaleLowerCase() === claimedIssuer.toLocaleLowerCase()) {
+      refreshed.push({ contractAddress, invokerDid: cachedDid });
+      continue;
+    }
+
+    console.log("ucan: refetch on issuer mismatch", {
+      invokerAddress,
+      contractAddress,
+    });
+    cache.del(`collaboratorKeys:${invokerAddress}:${contractAddress}`);
+
+    let fresh: string | null;
+    if (fetcher === "legacy" || isLegacy) {
+      fresh = (await getLegacyCollaboratorKeys(invokerAddress, contractAddress, {
+        bypassCache: true,
+      })) as string | null;
+    } else {
+      fresh = (await getCollaboratorKeys(invokerAddress, contractAddress, {
+        bypassCache: true,
+      })) as string | null;
+      if (!fresh) {
+        fresh = (await getLegacyCollaboratorKeys(
+          invokerAddress,
+          contractAddress,
+          { bypassCache: true }
+        )) as string | null;
+      }
+    }
+
+    if (fresh && fresh !== cachedDid) anyRefetched = true;
+    refreshed.push({ contractAddress, invokerDid: fresh });
+  }
+
+  if (!anyRefetched) return firstAttempt;
+
+  return validateContracts(refreshed, token);
 }
 
 
@@ -80,4 +178,4 @@ const verify = async (
   next();
 };
 
-export { verify };
+export { verify, validateContractAddress };

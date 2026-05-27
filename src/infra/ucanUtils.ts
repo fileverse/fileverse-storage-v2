@@ -9,6 +9,20 @@ export interface ValidationResult {
   actualContractAddress: Hex | null;
 }
 
+// Reads the top-level `iss` only — not the chain root. If the UCAN carries
+// proofs (delegated chain), `iss` is the delegator, not the on-chain
+// collaborator DID. Callers using this as a rotation guard will fail to
+// short-circuit on chained UCANs and pay one extra RPC per failed verify;
+// they will not, however, incorrectly skip a needed refetch.
+export function extractClaimedRootIssuer(token: string): string | null {
+  try {
+    const { payload } = ucans.parse(token);
+    return payload.iss ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function validateInvokerAddress(
   invokerAddress: Hex,
   token: string
