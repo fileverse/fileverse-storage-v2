@@ -84,7 +84,7 @@ export const create = async (params: ICreateFileParams) => {
       await File.updateMany(
         {
           appFileId: params.appFileId,
-          ipfsHash: FileIPFSType.CONTENT,
+          ipfsType: FileIPFSType.CONTENT,
           contractAddress: params.contractAddress,
           markedForUnpin: false,
           isPinned: true,
