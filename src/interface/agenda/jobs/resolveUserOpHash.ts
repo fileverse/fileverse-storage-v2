@@ -7,7 +7,7 @@ import { pimlicoClient } from "../../../infra/smart-agent/pimlico-client";
 import { reportError } from "../../../infra/reporter";
 import { config } from "../../../config";
 import { IOnChainFloppy } from "../../../types";
-import { addStorage } from "../../../domain/limit";
+import { addStorage, STORAGE_ALREADY_ADDED_MESSAGE } from "../../../domain/limit";
 
 const JOB_NAME = "RESOLVE_USER_OPS";
 
@@ -128,15 +128,35 @@ async function resolveUserOperations() {
           throw new Error(`Floppy not found: ${floppyShortCode}`);
         }
 
-        await addStorage({
-          contractAddress: contractAddress as string,
-          diskSpace: Number(diskSpace),
-          shortCode: floppyShortCode,
-          supportsMultipleClaims: floppy.supportsMultipleClaims,
-        });
+        try {
+          await addStorage({
+            contractAddress: contractAddress as string,
+            diskSpace: Number(diskSpace),
+            shortCode: floppyShortCode,
+            supportsMultipleClaims: floppy.supportsMultipleClaims,
+          });
+        } catch (error) {
+          // Storage was already credited by a prior redemption. The on-chain
+          // claim still succeeded (nullifier consumed), so there's nothing to
+          // retry — record the nullifier and mark the op processed below
+          // instead of throwing and re-running this op every tick.
+          if (
+            !(
+              error instanceof Error &&
+              error.message === STORAGE_ALREADY_ADDED_MESSAGE
+            )
+          ) {
+            throw error;
+          }
+          logger.info(
+            `Storage already added for floppy ${floppyShortCode}; marking user op ${userOpHash} as processed`
+          );
+        }
 
         // add nullifier to floppy
-        floppy.nullifiers.push(nullifier);
+        if (!floppy.nullifiers.includes(nullifier)) {
+          floppy.nullifiers.push(nullifier);
+        }
         await floppy.save();
 
         await UserOps.updateOne(

@@ -1,6 +1,9 @@
 import { Limit } from "../../infra/database/models";
 import { throwError } from "../../infra/errorHandler";
 
+export const STORAGE_ALREADY_ADDED_MESSAGE =
+  "Storage already added for this floppy";
+
 interface AddStorageParams {
   contractAddress: string;
   diskSpace: number;
@@ -20,7 +23,7 @@ export const addStorage = async ({
   if (existingRedeemValue && !supportsMultipleClaims) {
     return throwError({
       code: 400,
-      message: "Storage already added for this floppy",
+      message: STORAGE_ALREADY_ADDED_MESSAGE,
     });
   }
 
