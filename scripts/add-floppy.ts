@@ -22,16 +22,16 @@ interface IFloppy {
 }
 
 const FLOPPY = {
-  shortCode: "TESTCRC",
-  diskSpace: 250000000, // 250 MB
+  shortCode: "DAPPCON26",
+  diskSpace: 10000000000, // 10 GB
   metadataURI:
-    "ipfs://bafkreidt3kel5ro264wtxteil5aqfblzeok3wxucnp3cmeycwv3yxwxa2i",
-  maxCount: 150,
-  name: `Fileverse x Circles 2025. - Test Floppy`,
-  description: `For CRC holders and Metri users, Fileverse and Circles collaborated in creating a nostalgic floppy disc celebrating sovereing storage spaces we can own once we acquire it! This floppy disc has been created for you, it has 250 MB of encryptes storage space you can enable at any moment on ddocs.new, and it comes with other hidden perks 💛`,
-  img: "https://s3.eu-west-2.amazonaws.com/assets.fileverse.io/dapp/public/Circles+Transparent_Front+1.png",
+    "ipfs://QmVWo7emSDTzEuHtP3hg7m9Ry2GBwamGgfj4BLPRuJzmJL",
+  maxCount: 2000,
+  name: `DappCon 2026`,
+  description: 'Forked from the future, handed to you in Berlin! This floppy disk is a small Fileverse collectable with 10 GB of e2e encrypted storage on ddocs for you to try a new kind of private collaboration, built on Ethereum/Gnosis :yellow_heart:',
+  img: "https://s3.eu-west-2.amazonaws.com/assets.fileverse.io/dapp/public/dappcon-floppy.png",
   offchain: false,
-  supportsMultipleClaims: true,
+  supportsMultipleClaims: false,
 };
 
 const addFloppy = async () => {
