@@ -1,6 +1,6 @@
 import { Readable } from "stream";
 import { create } from "./file";
-import { upload as uploadToPinata } from "./ipfs";
+import { upload as uploadToPinata, uploadPrivate as uploadPrivateToPinata} from "./ipfs";
 import { FileIPFSType, SourceApp } from "../types";
 
 interface IUploadParams {
@@ -62,6 +62,26 @@ export const uploadOnly = async (params: IUploadParams) => {
   Object.assign(stream, { path: name });
 
   const ipfsFile = await uploadToPinata(stream, { name });
+
+  return {
+    ipfsUrl: ipfsFile?.ipfsUrl,
+    ipfsHash: ipfsFile?.ipfsHash,
+    ipfsStorage: ipfsFile?.ipfsStorage,
+    fileSize: ipfsFile?.pinSize,
+    mimetype,
+    ipfsType,
+  };
+};
+
+export const uploadOnlyPrivate = async (params: IUploadParams) => {
+  const { file, ipfsType } = params;
+  const { name, mimetype, data } = file;
+
+  const ipfsFile = await uploadPrivateToPinata({
+    name, 
+    mimetype, 
+    data
+  })
 
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,

@@ -5,12 +5,18 @@ import pinataSDK, {
   type PinataPinOptions,
   type PinataPinResponse,
 } from "@pinata/sdk";
+import { PinataSDK } from "pinata";
 import { logger } from "../../infra/logger";
 
 const pinataClient = pinataSDK(
   config.PINATA_API_KEY as string,
   config.PINATA_SECRET_KEY as string
 );
+
+const pinataPrivateClient = new PinataSDK({
+  pinataJwt: config.NEW_PINATA_JWT_KEY as string,
+  pinataGateway: config.NEW_PINATA_GATEWAY as string,
+});
 
 const formatUploadResponse = (file: PinataPinResponse) => {
   return {
@@ -19,6 +25,16 @@ const formatUploadResponse = (file: PinataPinResponse) => {
     ipfsStorage: "pinata",
     pinSize: file.PinSize,
     timestamp: file.Timestamp,
+  };
+};
+
+const formatPrivateUploadResponse = (file:any)=>{
+  return {
+    ipfsUrl: ``,
+    ipfsHash: file.cid,
+    ipfsStorage: "pinata-private",
+    pinSize: file.size,
+    timestamp: new Date().toISOString(),
   };
 };
 
@@ -75,6 +91,47 @@ export const unpin = async (ipfsHash: string) => {
     await pinataClient.unpin(ipfsHash);
   } catch (err) {
     console.error("error while unpinning from pinata", err);
+    throw err;
+  }
+};
+
+export const uploadPrivate = async (
+  file: {
+    name:string;
+    mimetype: string;
+    data: Buffer;
+    }
+)=>{
+  try{
+    const pinataFile=new File(
+      [new Uint8Array(file.data)],
+      file.name,
+      {
+        type: file.mimetype,
+      }
+    );
+    const uploadedFile = await pinataPrivateClient.upload.private.file(pinataFile); //change public to private in future
+    return formatPrivateUploadResponse(uploadedFile);
+  }
+  catch(err){
+    console.error("error while uploading private file", err);
+    logger.error(`error while uploading private file: ${err}`);
+    throw err;
+  }
+}
+
+export const createPrivateAccessLink = async (
+  cid:string,
+  expiresInSeconds=30
+) => {
+  try {
+    return await pinataPrivateClient.gateways.private.createAccessLink({
+      cid,
+      expires: expiresInSeconds,
+    });
+  } catch (err) {
+    console.error("error while creating private access link", err);
+    logger.error(`error while creating private access link: ${err}`);
     throw err;
   }
 };
