@@ -43,6 +43,7 @@
     "express-fileupload": "^1.4.0",
     "express-validation": "^4.1.0",
     "helmet": "^6.0.0",
+    "ioredis": "^5.11.1",
     "jsdom": "^26.1.0",
     "mongoose": "^6.5.4",
     "morgan": "^1.10.0",

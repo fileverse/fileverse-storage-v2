@@ -8,6 +8,7 @@ import pinataSDK, {
 import { PinataSDK } from "pinata";
 import { logger } from "../../infra/logger";
 
+
 const pinataClient = pinataSDK(
   config.PINATA_API_KEY as string,
   config.PINATA_SECRET_KEY as string
@@ -110,7 +111,7 @@ export const uploadPrivate = async (
         type: file.mimetype,
       }
     );
-    const uploadedFile = await pinataPrivateClient.upload.private.file(pinataFile); //change public to private in future
+    const uploadedFile = await pinataPrivateClient.upload.private.file(pinataFile);
     return formatPrivateUploadResponse(uploadedFile);
   }
   catch(err){
@@ -122,7 +123,7 @@ export const uploadPrivate = async (
 
 export const createPrivateAccessLink = async (
   cid:string,
-  expiresInSeconds=30
+  expiresInSeconds=Number(config.ACCESS_LINK_EXPIRES_IN_SECOND)
 ) => {
   try {
     return await pinataPrivateClient.gateways.private.createAccessLink({
