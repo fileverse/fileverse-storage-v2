@@ -2,7 +2,7 @@ import { Response } from "express";
 import { CustomRequest } from "../../../types";
 import { createPrivateAccessLink } from "../../../domain/ipfs";
 import { throwError } from "../../../infra/errorHandler";
-import { redis } from "../../../infra/redis";
+import { getCache, setCache } from "../../../infra/cache";
 import { config } from "../../../config";
 
 const access = async (
@@ -20,7 +20,7 @@ const access = async (
   }
 
   const cacheKey = `private-access:${cid}`;
-  const cached = await redis.get(cacheKey);
+  const cached = await getCache(cacheKey);
 
   if(cached){
     return res.json({
@@ -31,10 +31,9 @@ const access = async (
 
   const url = await createPrivateAccessLink(cid);
 
-  await redis.set(
+  await setCache(
     cacheKey,
     url,
-    "EX",
     Number(config.ACCESS_LINK_EXPIRES_IN_SECOND)
   );
 
