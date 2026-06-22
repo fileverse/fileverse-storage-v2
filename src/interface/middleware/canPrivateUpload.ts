@@ -36,7 +36,7 @@ export const canPrivateUpload = async(
 
     if(!isWorkspace){
         throwError({
-            code:401,
+            code:403,
             message:`contract ${contractAddress} is not a workspace`,
             req,
         });
