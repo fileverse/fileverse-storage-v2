@@ -3,6 +3,9 @@ import { NextFunction } from "express";
 import { CustomRequest } from "../../types";
 import { Response } from "express";
 import { throwError } from "../../infra/errorHandler";
+import { getCache, setCache } from "../../infra/cache";
+import { checkIsWorkspace } from "../../domain/workspace";
+import { config } from "../../config";
 
 export const checkStorageLimit = async (
   contractAddress: string,
@@ -26,6 +29,7 @@ export const canUpload = async (
 ) => {
   const invokerAddress = req.invokerAddress;
   const contractAddress = req.contractAddress;
+  const isPrivateUpload = req.baseUrl.includes("/private");
   if (!req.isAuthenticated) {
     const statusCode = invokerAddress ? 403 : 401;
     const message = `invokerAddress: ${invokerAddress} does not have permission to upload file for subdomain: ${contractAddress}`;
@@ -35,6 +39,38 @@ export const canUpload = async (
       message,
       req,
     });
+  }
+
+  if( isPrivateUpload){
+    if(!contractAddress){
+        return throwError({
+            code: 401,
+            message: "contract address not found",
+            req
+        });
+    }
+    const cacheKey = `workspace:${contractAddress.toLowerCase()}`;
+    const cached = await getCache(cacheKey);
+    let isWorkspace: boolean;
+
+    if(cached != null){
+        isWorkspace=cached==="true";
+    }
+    else{
+        isWorkspace = await checkIsWorkspace(contractAddress);
+        await setCache(
+            cacheKey,
+            String(isWorkspace),
+            Number(config.WORKSPACE_STATUS_TTL)
+        );
+    }
+    if(!isWorkspace){
+        return throwError({
+            code:403,
+            message:`contract ${contractAddress} is not a workspace`,
+            req,
+        });
+    }
   }
 
   const storageLimitBreached = await checkStorageLimit(

@@ -3,7 +3,7 @@ import fileUpload from "express-fileupload";
 import { asyncHandler, asyncHandlerArray } from "../../../infra/asyncHandler";
 import { verifyV2 } from "../../../infra/ucanV2";
 import privateBatchUpload from './privateBatchUpload';
-import { canUpload, canPrivateUpload } from '../../middleware';
+import { canUpload } from '../../middleware';
 import access from './access';
 
 const router = Router();
@@ -11,7 +11,6 @@ const router = Router();
 router.post(
     "/batch", 
     asyncHandler(verifyV2), 
-    asyncHandler(canPrivateUpload),
     asyncHandler(canUpload),
     fileUpload(),
     asyncHandlerArray(privateBatchUpload)
