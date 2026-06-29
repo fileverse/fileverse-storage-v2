@@ -1,4 +1,4 @@
-import { PassThrough, Readable } from "stream";
+import { PassThrough } from "stream";
 import request from "request";
 import { config } from "../../config";
 import pinataSDK, {
@@ -19,13 +19,13 @@ const pinataPrivateClient = new PinataSDK({
   pinataGateway: config.NEW_PINATA_GATEWAY as string,
 });
 
-const formatUploadResponse = (file: PinataPinResponse) => {
+const formatPublicUploadResponse = (file: PinataPinResponse) => {
   return {
-    ipfsUrl: `${config.PINATA_GATEWAY}/${file.IpfsHash}`,
-    ipfsHash: file.IpfsHash,
-    ipfsStorage: "pinata",
-    pinSize: file.PinSize,
-    timestamp: file.Timestamp,
+    ipfsUrl: `${config.PINATA_GATEWAY}/${file.cid}`,
+    ipfsHash: file.cid,
+    ipfsStorage: "pinata-public",
+    pinSize: file.size,
+    timestamp: new Date().toISOString(),
   };
 };
 
@@ -44,39 +44,31 @@ interface UploadToPinataOptions {
   attributes?: { trait_type: string; value: string }[];
 }
 
-export const upload = async (
-  readableStreamForFile: Readable,
-  { name, attributes }: UploadToPinataOptions
-) => {
-  const keyvalues: Record<string, string> = {};
 
-  (attributes || []).forEach((attribute) => {
-    keyvalues[attribute.trait_type] = attribute.value;
-  });
-
-  const options: PinataPinOptions = {
-    pinataMetadata: {
-      name,
-      ...keyvalues,
-    },
-    pinataOptions: {
-      cidVersion: 0,
-    },
-  };
-
-  try {
-    const file = await pinataClient.pinFileToIPFS(
-      readableStreamForFile,
-      options
+export const uploadPublic = async (
+  file: {
+    name:string;
+    mimetype: string;
+    data: Buffer;
+    }
+)=>{
+  try{
+    const pinataFile=new File(
+      [new Uint8Array(file.data)],
+      file.name,
+      {
+        type: file.mimetype,
+      }
     );
-
-    return formatUploadResponse(file);
-  } catch (err) {
-    console.error("error while uploading to pinata", err);
-    logger.error(`error while uploading to pinata: ${err}`);
+    const uploadedFile = await pinataPrivateClient.upload.public.file(pinataFile).name(file.name);
+    return formatPublicUploadResponse(uploadedFile);
+  }
+  catch(err){
+    console.error("error while uploading public file", err);
+    logger.error(`error while uploading public file: ${err}`);
     throw err;
   }
-};
+}
 
 export const get = async (ipfsUrl: string) => {
   if (!ipfsUrl) {
@@ -111,7 +103,7 @@ export const uploadPrivate = async (
         type: file.mimetype,
       }
     );
-    const uploadedFile = await pinataPrivateClient.upload.private.file(pinataFile);
+    const uploadedFile = await pinataPrivateClient.upload.private.file(pinataFile).name(file.name);
     return formatPrivateUploadResponse(uploadedFile);
   }
   catch(err){
