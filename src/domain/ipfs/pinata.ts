@@ -1,11 +1,11 @@
-import { PassThrough } from "stream";
+import { PassThrough,Readable } from "stream";
 import request from "request";
 import { config } from "../../config";
 import pinataSDK, {
   type PinataPinOptions,
   type PinataPinResponse,
 } from "@pinata/sdk";
-import { PinataSDK } from "pinata";
+import { PinataSDK, type UploadResponse } from "pinata";
 import { logger } from "../../infra/logger";
 
 
@@ -19,7 +19,17 @@ const pinataPrivateClient = new PinataSDK({
   pinataGateway: config.NEW_PINATA_GATEWAY as string,
 });
 
-const formatPublicUploadResponse = (file: PinataPinResponse) => {
+const formatUploadResponse  = (file: PinataPinResponse) => { //formatter for older sdk cuz properties not same
+  return {
+    ipfsUrl: `${config.PINATA_GATEWAY}/${file.IpfsHash}`,
+    ipfsHash: file.IpfsHash,
+    ipfsStorage: "pinata-public",
+    pinSize: file.PinSize,
+    timestamp: new Date().toISOString(),
+  };
+};
+
+const formatPublicUploadResponse = (file: UploadResponse) => { //formatter for public upload newer sdk
   return {
     ipfsUrl: `${config.PINATA_GATEWAY}/${file.cid}`,
     ipfsHash: file.cid,
@@ -29,7 +39,7 @@ const formatPublicUploadResponse = (file: PinataPinResponse) => {
   };
 };
 
-const formatPrivateUploadResponse = (file:any)=>{
+const formatPrivateUploadResponse = (file: UploadResponse)=>{// formatter for private upload newer sdk
   return {
     ipfsUrl: ``,
     ipfsHash: file.cid,
@@ -43,6 +53,41 @@ interface UploadToPinataOptions {
   name: string;
   attributes?: { trait_type: string; value: string }[];
 }
+
+// older sdk upload function (kept as the interface/upload/publicUpload.ts doesnt throw error)
+export const upload = async ( 
+  readableStreamForFile: Readable,
+  { name, attributes }: UploadToPinataOptions
+) => {
+  const keyvalues: Record<string, string> = {};
+
+  (attributes || []).forEach((attribute) => {
+    keyvalues[attribute.trait_type] = attribute.value;
+  });
+
+  const options: PinataPinOptions = {
+    pinataMetadata: {
+      name,
+      ...keyvalues,
+    },
+    pinataOptions: {
+      cidVersion: 0,
+    },
+  };
+
+  try {
+    const file = await pinataClient.pinFileToIPFS(
+      readableStreamForFile,
+      options
+    );
+
+    return formatUploadResponse (file);
+  } catch (err) {
+    console.error("error while uploading to pinata", err);
+    logger.error(`error while uploading to pinata: ${err}`);
+    throw err;
+  }
+};
 
 
 export const uploadPublic = async (
