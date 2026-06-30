@@ -34,6 +34,7 @@ export const upload = async (params: IUploadParams) => {
     appFileId,
     ipfsHash: ipfsFile?.ipfsHash,
     gatewayUrl: ipfsFile?.ipfsUrl,
+    storageType: ipfsFile?.storageType,
     contractAddress,
     invokerAddress,
     fileSize: ipfsFile?.pinSize,
@@ -45,7 +46,7 @@ export const upload = async (params: IUploadParams) => {
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,
     ipfsHash: ipfsFile?.ipfsHash,
-    ipfsStorage: ipfsFile?.ipfsStorage,
+    storageType: ipfsFile?.storageType,
     fileSize: ipfsFile?.pinSize,
     mimetype,
     appFileId,
@@ -67,7 +68,7 @@ export const uploadOnly = async (params: IUploadParams) => {
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,
     ipfsHash: ipfsFile?.ipfsHash,
-    ipfsStorage: ipfsFile?.ipfsStorage,
+    storageType: ipfsFile?.storageType,
     fileSize: ipfsFile?.pinSize,
     mimetype,
     ipfsType,
@@ -87,7 +88,7 @@ export const uploadOnlyPrivate = async (params: IUploadParams) => {
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,
     ipfsHash: ipfsFile?.ipfsHash,
-    ipfsStorage: ipfsFile?.ipfsStorage,
+    storageType: ipfsFile?.storageType,
     fileSize: ipfsFile?.pinSize,
     mimetype,
     ipfsType,

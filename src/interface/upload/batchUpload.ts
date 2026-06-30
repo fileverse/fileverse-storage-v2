@@ -5,24 +5,12 @@ import { create } from "../../domain/file";
 import { CustomRequest, FileIPFSType } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
+import { BatchUploadResponse, getIPFSTypeFromFileName } from "./common";
 
 const batchUploadValidation = {
   headers: Joi.object({
     contract: Joi.string().required(),
   }).unknown(true),
-};
-
-interface IBatchUploadResponse {
-  gateIpfsHash: string;
-  contentIpfsHash: string;
-  metadataIpfsHash: string;
-}
-
-const getIPFSTypeFromFileName = (fileName: string) => {
-  if (fileName.includes("METADATA")) return FileIPFSType.METADATA;
-  if (fileName.includes("CONTENT")) return FileIPFSType.CONTENT;
-  if (fileName.includes("GATE")) return FileIPFSType.GATE;
-  throw new Error("Invalid file name");
 };
 
 const batchUploadFn = async (req: CustomRequest, res: Response) => {
@@ -58,6 +46,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
       appFileId,
       ipfsHash: ipfsFile.ipfsHash,
       gatewayUrl: ipfsFile.ipfsUrl,
+      storageType: ipfsFile.storageType,
       contractAddress,
       invokerAddress,
       fileSize: ipfsFile.fileSize,
@@ -69,7 +58,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
   console.time("db create");
   await Promise.all(dbPromises);
   console.timeEnd("db create");
-  const response: IBatchUploadResponse = {
+  const response: BatchUploadResponse = {
     gateIpfsHash: "",
     contentIpfsHash: "",
     metadataIpfsHash: "",

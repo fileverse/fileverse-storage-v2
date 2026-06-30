@@ -17,6 +17,7 @@ const fileSchema = new Schema({
   appFileId: { type: String, index: false },
   networkName: { type: String, default: config.NETWORK_NAME },
   ipfsHash: { type: String },
+  storageType: { type: String },
   fileSize: { type: Number },
   isDeleted: { type: Boolean, default: false },
   isPinned: { type: Boolean, default: false },

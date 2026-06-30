@@ -1,6 +1,7 @@
 export { validate, Joi, ValidationError } from "./validator";
 export { canView } from "./canView";
 export { canUpload } from "./canUpload";
+export { canPrivateUpload } from "./canPrivateUpload";
 export { expressErrorHandler } from "./errorHandler";
 export { canCheckLimit } from "./canCheckLimit";
 export { canUpdateLimit } from "./canUpdateLimit";

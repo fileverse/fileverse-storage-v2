@@ -15,15 +15,15 @@ const pinataClient = pinataSDK(
 );
 
 const pinataPrivateClient = new PinataSDK({
-  pinataJwt: config.NEW_PINATA_JWT_KEY as string,
-  pinataGateway: config.NEW_PINATA_GATEWAY as string,
+  pinataJwt: config.PINATA_JWT_KEY as string,
+  pinataGateway: config.PINATA_GATEWAY as string,
 });
 
 const formatUploadResponse  = (file: PinataPinResponse) => { //formatter for older sdk cuz properties not same
   return {
     ipfsUrl: `${config.PINATA_GATEWAY}/${file.IpfsHash}`,
     ipfsHash: file.IpfsHash,
-    ipfsStorage: "pinata-public",
+    storageType: "pinata-public",
     pinSize: file.PinSize,
     timestamp: new Date().toISOString(),
   };
@@ -33,7 +33,7 @@ const formatPublicUploadResponse = (file: UploadResponse) => { //formatter for p
   return {
     ipfsUrl: `${config.PINATA_GATEWAY}/${file.cid}`,
     ipfsHash: file.cid,
-    ipfsStorage: "pinata-public",
+    storageType: "pinata-public",
     pinSize: file.size,
     timestamp: new Date().toISOString(),
   };
@@ -43,7 +43,7 @@ const formatPrivateUploadResponse = (file: UploadResponse)=>{// formatter for pr
   return {
     ipfsUrl: ``,
     ipfsHash: file.cid,
-    ipfsStorage: "pinata-private",
+    storageType: "pinata-private",
     pinSize: file.size,
     timestamp: new Date().toISOString(),
   };

@@ -50,6 +50,7 @@ export interface IFile {
   gatewayUrl: string;
   appFileId: string;
   ipfsHash: string;
+  storageType: string;
   networkName: string;
   fileSize: number;
   tags: string[];
