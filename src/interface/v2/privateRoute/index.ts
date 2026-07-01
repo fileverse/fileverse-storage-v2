@@ -4,7 +4,7 @@ import { asyncHandler, asyncHandlerArray } from "../../../infra/asyncHandler";
 import { verifyV2 } from "../../../infra/ucanV2";
 import privateBatchUpload from './privateBatchUpload';
 import { canPrivateUpload } from '../../middleware';
-import access from './access';
+import gateway from './gateway';
 
 const router = Router();
 
@@ -17,8 +17,8 @@ router.post(
 );
 
 router.get(
-    "/access", 
-    asyncHandlerArray(access)
+    "/gateway", 
+    asyncHandlerArray(gateway)
 );
 
 
