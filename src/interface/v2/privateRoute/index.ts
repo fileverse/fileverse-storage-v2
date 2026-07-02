@@ -5,8 +5,8 @@ import { verifyV2 } from "../../../infra/ucanV2";
 import privateBatchUpload from './privateBatchUpload';
 import { canPrivateUpload } from '../../middleware';
 import gateway from './gateway';
-import uploadPrivateCommentFn from "./comment"
-
+import uploadPrivateCommentFn from "./comment";
+import uploadPrivateImageFn from './privateImageUpload';
 const router = Router();
 
 router.post(
@@ -26,6 +26,12 @@ router.post(
     "/comment-private",
     fileUpload(),
     asyncHandlerArray(uploadPrivateCommentFn)
+);
+
+router.post(
+    "/image-private",
+    fileUpload(),
+    asyncHandlerArray(uploadPrivateImageFn)
 );
 
 export default router;
