@@ -24,6 +24,7 @@ const formatUploadResponse  = (file: PinataPinResponse) => { //formatter for old
     ipfsUrl: `${config.PINATA_GATEWAY}/${file.IpfsHash}`,
     ipfsHash: file.IpfsHash,
     storageType: "pinata-public",
+    ipfsStorage: "pinata",
     pinSize: file.PinSize,
     timestamp: new Date().toISOString(),
   };
@@ -34,6 +35,7 @@ const formatPublicUploadResponse = (file: UploadResponse) => { //formatter for p
     ipfsUrl: `${config.PINATA_GATEWAY}/${file.cid}`,
     ipfsHash: file.cid,
     storageType: "pinata-public",
+    ipfsStorage: "pinata",
     pinSize: file.size,
     timestamp: new Date().toISOString(),
   };
@@ -44,6 +46,7 @@ const formatPrivateUploadResponse = (file: UploadResponse)=>{// formatter for pr
     ipfsUrl: ``,
     ipfsHash: file.cid,
     storageType: "pinata-private",
+    ipfsStorage: "pinata",
     pinSize: file.size,
     timestamp: new Date().toISOString(),
   };
@@ -54,7 +57,7 @@ interface UploadToPinataOptions {
   attributes?: { trait_type: string; value: string }[];
 }
 
-// older sdk upload function (kept as the interface/upload/publicUpload.ts doesnt throw error)
+// older sdk upload function (public upload)
 export const upload = async ( 
   readableStreamForFile: Readable,
   { name, attributes }: UploadToPinataOptions
@@ -90,6 +93,7 @@ export const upload = async (
 };
 
 
+// newer sdk public upload funtion (unused for now)
 export const uploadPublic = async (
   file: {
     name:string;
@@ -133,6 +137,7 @@ export const unpin = async (ipfsHash: string) => {
   }
 };
 
+// newer sdk private upload
 export const uploadPrivate = async (
   file: {
     name:string;

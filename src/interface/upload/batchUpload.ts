@@ -46,13 +46,13 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
       appFileId,
       ipfsHash: ipfsFile.ipfsHash,
       gatewayUrl: ipfsFile.ipfsUrl,
-      storageType: ipfsFile.storageType,
       contractAddress,
       invokerAddress,
       fileSize: ipfsFile.fileSize,
       tags: [],
       sourceApp,
       ipfsType: ipfsFile.ipfsType,
+      storageType: ipfsFile.storageType, 
     })
   );
   console.time("db create");
