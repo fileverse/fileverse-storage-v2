@@ -158,18 +158,6 @@ export const uploadPrivate = async (
   }
 }
 
-export const createPrivateAccessLink = async (
-  cid:string,
-  expiresInSeconds=Number(config.ACCESS_LINK_EXPIRES_IN_SECOND)
-) => {
-  try {
-    return await pinataPrivateClient.gateways.private.createAccessLink({
-      cid,
-      expires: expiresInSeconds,
-    });
-  } catch (err) {
-    console.error("error while creating private access link", err);
-    logger.error(`error while creating private access link: ${err}`);
-    throw err;
-  }
+export const getPrivateFile = async (cid: string) => {
+    return pinataPrivateClient.gateways.private.get(cid);
 };
