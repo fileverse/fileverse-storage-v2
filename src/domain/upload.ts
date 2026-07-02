@@ -97,3 +97,45 @@ export const uploadOnlyPrivate = async (params: IUploadParams) => {
     storageType: ipfsFile?.storageType
   };
 };
+
+export const uploadPrivate = async (params: IUploadParams) => {
+  const {
+    appFileId,
+    sourceApp,
+    contractAddress,
+    file,
+    invokerAddress,
+    tags,
+    ipfsType,
+  } = params;
+  const { name, mimetype, data } = file;
+
+  const ipfsFile = await uploadPrivateToPinata({
+    name, 
+    mimetype, 
+    data
+  });
+
+  await create({
+    appFileId,
+    ipfsHash: ipfsFile?.ipfsHash,
+    gatewayUrl: ipfsFile?.ipfsUrl,
+    contractAddress,
+    invokerAddress,
+    fileSize: ipfsFile?.pinSize,
+    tags: tags || [],
+    sourceApp,
+    ipfsType,
+    storageType: ipfsFile?.storageType
+  });
+
+  return {
+    ipfsUrl: ipfsFile?.ipfsUrl,
+    ipfsHash: ipfsFile?.ipfsHash,
+    ipfsStorage: ipfsFile?.ipfsStorage,
+    fileSize: ipfsFile?.pinSize,
+    mimetype,
+    ipfsType,
+    storageType: ipfsFile?.storageType
+  };
+};
