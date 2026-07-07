@@ -80,7 +80,7 @@ export const uploadOnly = async (params: IUploadParams) => {
 export const uploadOnlyPrivate = async (params: IUploadParams) => {
   const { file, ipfsType } = params;
   const { name, mimetype, data } = file;
-
+  
   const ipfsFile = await uploadPrivateToPinata({
     name, 
     mimetype, 

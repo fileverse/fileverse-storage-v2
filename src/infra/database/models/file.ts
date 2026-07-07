@@ -12,7 +12,6 @@ const fileSchema = new Schema({
   },
   gatewayUrl: {
     type: String,
-    required: true,
   },
   appFileId: { type: String, index: false },
   networkName: { type: String, default: config.NETWORK_NAME },
