@@ -1,16 +1,44 @@
 import { Response } from "express";
 import { CustomRequest } from "../../types";
 import { throwError } from "../../infra/errorHandler";
-import { getPrivateFile } from "../../domain/ipfs";
-import { Readable } from "stream";
-import { pipeline } from "stream/promises";
 import { validate, Joi } from "../middleware";
+import { getPrivateFile } from "../../domain/ipfs";
+import {
+  getCachedPrivateGatewayResponse,
+  setCachedPrivateGatewayResponse,
+  type PrivateGatewayResponse,
+} from "./gatewayCache";
 
 const gatewayValidation = {
   headers: Joi.object({
     contract: Joi.string().required(),
     invoker: Joi.string().required(),
   }).unknown(true),
+};
+
+const sendGatewayResponse = async (
+  res: Response,
+  response: PrivateGatewayResponse
+) => {
+  if (response.contentType) {
+    res.setHeader("Content-Type", response.contentType);
+  }
+
+  if (response.data == null) {
+    return;
+  }
+
+  if (typeof response.data === "string") {
+    return res.send(response.data);
+  }
+
+  if (response.data instanceof Blob) {
+    const buffer = Buffer.from(await response.data.arrayBuffer());
+    res.end(buffer);
+    return;
+  }
+
+  return res.json(response.data);
 };
 
 const gateway = async (
@@ -36,13 +64,16 @@ const gateway = async (
       req,
     });
   }
-  const { data, contentType } = await getPrivateFile(cid);
 
-  if (contentType) {
-    res.setHeader("Content-Type", contentType);
-  }  
+  const cachedResponse = await getCachedPrivateGatewayResponse(cid);
 
-  if (data == null) {
+  if (cachedResponse) {
+    return sendGatewayResponse(res, cachedResponse);
+  }
+
+  const response = await getPrivateFile(cid);
+
+  if (response.data == null) {
     return throwError({
       code: 404,
       message: "File not found",
@@ -50,16 +81,9 @@ const gateway = async (
     });
   }
 
-  if (typeof data === "string") {
-    return res.send(data);
-  }
+  void  setCachedPrivateGatewayResponse(cid, response);
 
-  if (data instanceof Blob) {
-    const stream = Readable.fromWeb(data.stream() as any);
-    await pipeline(stream, res);
-    return;
-  }
-  return res.json(data);
+  return sendGatewayResponse(res, response);
 };
 
 export default [validate(gatewayValidation), gateway];
