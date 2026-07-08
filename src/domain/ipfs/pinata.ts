@@ -43,7 +43,7 @@ const formatPublicUploadResponse = (file: UploadResponse) => { //formatter for p
 
 const formatPrivateUploadResponse = (file: UploadResponse)=>{// formatter for private upload newer sdk
   return {
-    ipfsUrl: ``,
+    ipfsUrl: `${config.BASE_URL}/private/gateway?cid=${file.cid}`,
     ipfsHash: file.cid,
     storageType: "pinata-private",
     ipfsStorage: "pinata",
