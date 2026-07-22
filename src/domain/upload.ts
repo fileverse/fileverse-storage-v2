@@ -1,7 +1,7 @@
 import { Readable } from "stream";
 import { create } from "./file";
 import { upload as uploadToPinata } from "./ipfs";
-import { FileIPFSType, SourceApp } from "../types";
+import { BucketTier, FileIPFSType, SourceApp } from "../types";
 
 interface IUploadParams {
   appFileId: string;
@@ -11,6 +11,7 @@ interface IUploadParams {
   invokerAddress: string;
   tags: string[];
   ipfsType: FileIPFSType;
+  tier?: BucketTier;
 }
 
 export const upload = async (params: IUploadParams) => {
@@ -22,6 +23,7 @@ export const upload = async (params: IUploadParams) => {
     invokerAddress,
     tags,
     ipfsType,
+    tier,
   } = params;
   const { name, mimetype, data } = file;
 
@@ -40,6 +42,7 @@ export const upload = async (params: IUploadParams) => {
     tags: tags || [],
     sourceApp,
     ipfsType,
+    tier,
   });
 
   return {

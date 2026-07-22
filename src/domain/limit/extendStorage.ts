@@ -1,4 +1,5 @@
 import { Limit } from "../../infra/database/models";
+import { BucketTier } from "../../types";
 
 export const extendStorage = async ({
   contractAddress,
@@ -6,6 +7,12 @@ export const extendStorage = async ({
   contractAddress: string;
 }) => {
   const limit = await Limit.findOne({ contractAddress });
+
+  if (limit && limit.tier === BucketTier.WORKSPACE) {
+    throw new Error(
+      "Floppy redemption is not available for workspace storage"
+    );
+  }
 
   if (
     limit &&

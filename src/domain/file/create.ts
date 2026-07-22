@@ -1,12 +1,16 @@
 import { config } from "../../config";
-import { File, Limit } from "../../infra/database/models";
-import { FileIPFSType, IFile } from "../../types";
-// omit isDeleted, isPinned, timeStamp
+import { File, Limit, WorkspaceUploadLog } from "../../infra/database/models";
+import { logger } from "../../infra/logger";
+import { BucketTier, FileIPFSType, IFile } from "../../types";
+
 interface ICreateFileParams
-  extends Omit<IFile, "isDeleted" | "isPinned" | "timeStamp" | "networkName"> {}
+  extends Omit<IFile, "isDeleted" | "isPinned" | "timeStamp" | "networkName"> {
+  tier?: BucketTier;
+}
 
 export const create = async (params: ICreateFileParams) => {
-  const { contractAddress } = params;
+  const { contractAddress, tier } = params;
+  const isWorkspace = tier === BucketTier.WORKSPACE;
 
   const newFile = await new File({
     ...params,
@@ -60,14 +64,42 @@ export const create = async (params: ICreateFileParams) => {
 
   // People are hitting ceiling too fast
   if (newFile.ipfsType === FileIPFSType.CONTENT) {
+    const setOnInsert: Record<string, unknown> = { contractAddress };
+    if (isWorkspace) {
+      setOnInsert.tier = BucketTier.WORKSPACE;
+      setOnInsert.storageLimit = config.WORKSPACE_DEFAULT_STORAGE_LIMIT;
+    }
     await Limit.updateOne(
       { contractAddress },
       {
         $inc: { storageUse: newFile.fileSize },
-        $setOnInsert: { contractAddress },
+        $setOnInsert: setOnInsert,
       },
       { upsert: true }
     );
   }
+
+  // Per-workspace audit trail. Append-only; logs every ipfsType (not just
+  // CONTENT) so we have a complete record of what a team uploaded. Failures
+  // here must not surface to the caller — the upload + Limit increment have
+  // already succeeded.
+  if (isWorkspace) {
+    try {
+      await WorkspaceUploadLog.create({
+        contractAddress,
+        ipfsHash: newFile.ipfsHash,
+        fileSize: newFile.fileSize,
+        invokerAddress: params.invokerAddress,
+        ipfsType: newFile.ipfsType,
+        uploadedAt: new Date(),
+      });
+    } catch (err) {
+      logger.error(
+        { err, contractAddress, ipfsHash: newFile.ipfsHash },
+        "WorkspaceUploadLog write failed"
+      );
+    }
+  }
+
   return newFile.toObject();
 };
