@@ -1,15 +1,15 @@
 import { Response } from "express";
-
-import { uploadOnly } from "../../domain/upload";
-import { create } from "../../domain/file";
-import { CustomRequest, FileIPFSType } from "../../types";
-import { validate, Joi } from "../middleware";
-import { throwError } from "../../infra/errorHandler";
-import { BatchUploadResponse, getIPFSTypeFromFileName } from "./common";
+import { uploadOnlyPrivate } from "../../../domain/upload";
+import { create } from "../../../domain/file";
+import { CustomRequest, FileIPFSType } from "../../../types";
+import { validate, Joi } from "../../middleware";
+import { throwError } from "../../../infra/errorHandler";
+import { BatchUploadResponse, getIPFSTypeFromFileName } from "../../upload/common";
 
 const batchUploadValidation = {
   headers: Joi.object({
-    contract: Joi.string().required(),
+    "x-contract-meta": Joi.string().required(),
+    "x-invoker-address": Joi.string().required(),
   }).unknown(true),
 };
 
@@ -27,7 +27,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
   }
 
   const uploadPromises = files.map((file) =>
-    uploadOnly({
+    uploadOnlyPrivate({
       file,
       appFileId,
       sourceApp,
@@ -37,27 +37,23 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
       tags: [],
     })
   );
-  console.time("pinata upload");
   const uploadedFiles = await Promise.all(uploadPromises);
-  console.timeEnd("pinata upload");
 
   const dbPromises = uploadedFiles.map((ipfsFile) =>
     create({
       appFileId,
       ipfsHash: ipfsFile.ipfsHash,
       gatewayUrl: ipfsFile.ipfsUrl,
+      storageType: ipfsFile.storageType,
       contractAddress,
       invokerAddress,
       fileSize: ipfsFile.fileSize,
       tags: [],
       sourceApp,
       ipfsType: ipfsFile.ipfsType,
-      storageType: ipfsFile.storageType, 
     })
   );
-  console.time("db create");
   await Promise.all(dbPromises);
-  console.timeEnd("db create");
   const response: BatchUploadResponse = {
     gateIpfsHash: "",
     contentIpfsHash: "",

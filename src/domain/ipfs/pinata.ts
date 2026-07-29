@@ -1,24 +1,54 @@
-import { PassThrough, Readable } from "stream";
+import { PassThrough,Readable } from "stream";
 import request from "request";
 import { config } from "../../config";
 import pinataSDK, {
   type PinataPinOptions,
   type PinataPinResponse,
 } from "@pinata/sdk";
+import { PinataSDK, type UploadResponse } from "pinata";
 import { logger } from "../../infra/logger";
+
 
 const pinataClient = pinataSDK(
   config.PINATA_API_KEY as string,
   config.PINATA_SECRET_KEY as string
 );
 
-const formatUploadResponse = (file: PinataPinResponse) => {
+const pinataPrivateClient = new PinataSDK({
+  pinataJwt: config.PINATA_JWT_KEY as string,
+  pinataGateway: config.PINATA_GATEWAY as string,
+});
+
+const formatUploadResponse  = (file: PinataPinResponse) => { //formatter for older sdk cuz properties not same
   return {
     ipfsUrl: `${config.PINATA_GATEWAY}/${file.IpfsHash}`,
     ipfsHash: file.IpfsHash,
+    storageType: "pinata-public",
     ipfsStorage: "pinata",
     pinSize: file.PinSize,
-    timestamp: file.Timestamp,
+    timestamp: new Date().toISOString(),
+  };
+};
+
+const formatPublicUploadResponse = (file: UploadResponse) => { //formatter for public upload newer sdk
+  return {
+    ipfsUrl: `${config.PINATA_GATEWAY}/${file.cid}`,
+    ipfsHash: file.cid,
+    storageType: "pinata-public",
+    ipfsStorage: "pinata",
+    pinSize: file.size,
+    timestamp: new Date().toISOString(),
+  };
+};
+
+const formatPrivateUploadResponse = (file: UploadResponse)=>{// formatter for private upload newer sdk
+  return {
+    ipfsUrl: `${config.BASE_URL}/private/gateway?cid=${file.cid}`,
+    ipfsHash: file.cid,
+    storageType: "pinata-private",
+    ipfsStorage: "pinata",
+    pinSize: file.size,
+    timestamp: new Date().toISOString(),
   };
 };
 
@@ -27,7 +57,8 @@ interface UploadToPinataOptions {
   attributes?: { trait_type: string; value: string }[];
 }
 
-export const upload = async (
+// older sdk upload function (public upload)
+export const upload = async ( 
   readableStreamForFile: Readable,
   { name, attributes }: UploadToPinataOptions
 ) => {
@@ -53,13 +84,40 @@ export const upload = async (
       options
     );
 
-    return formatUploadResponse(file);
+    return formatUploadResponse (file);
   } catch (err) {
     console.error("error while uploading to pinata", err);
     logger.error(`error while uploading to pinata: ${err}`);
     throw err;
   }
 };
+
+
+// newer sdk public upload funtion (unused for now)
+export const uploadPublic = async (
+  file: {
+    name:string;
+    mimetype: string;
+    data: Buffer;
+    }
+)=>{
+  try{
+    const pinataFile=new File(
+      [new Uint8Array(file.data)],
+      file.name,
+      {
+        type: file.mimetype,
+      }
+    );
+    const uploadedFile = await pinataPrivateClient.upload.public.file(pinataFile).name(file.name);
+    return formatPublicUploadResponse(uploadedFile);
+  }
+  catch(err){
+    console.error("error while uploading public file", err);
+    logger.error(`error while uploading public file: ${err}`);
+    throw err;
+  }
+}
 
 export const get = async (ipfsUrl: string) => {
   if (!ipfsUrl) {
@@ -77,4 +135,34 @@ export const unpin = async (ipfsHash: string) => {
     console.error("error while unpinning from pinata", err);
     throw err;
   }
+};
+
+// newer sdk private upload
+export const uploadPrivate = async (
+  file: {
+    name:string;
+    mimetype: string;
+    data: Buffer;
+    }
+)=>{
+  try{
+    const pinataFile=new File(
+      [new Uint8Array(file.data)],
+      file.name,
+      {
+        type: file.mimetype,
+      }
+    );
+    const uploadedFile = await pinataPrivateClient.upload.private.file(pinataFile).name(file.name);
+    return formatPrivateUploadResponse(uploadedFile);
+  }
+  catch(err){
+    console.error("error while uploading private file", err);
+    logger.error(`error while uploading private file: ${err}`);
+    throw err;
+  }
+}
+
+export const getPrivateFile = async (cid: string) => {
+    return pinataPrivateClient.gateways.private.get(cid);
 };

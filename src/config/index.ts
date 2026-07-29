@@ -13,4 +13,6 @@ config.LEGACY_PORTAL_REGISTRY_ADDRESS =
 
 config.LEGACY_STORAGE_BACKEND = config.LEGACY_STORAGE_BACKEND || "";
 
+config.WORKSPACE_STATUS_TTL= process.env.WORKSPACE_STATUS_TTL ?? "86400";
+
 export { config };
