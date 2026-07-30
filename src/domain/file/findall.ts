@@ -7,3 +7,7 @@ export const findAll = async (invokerAddress: string) => {
 export const findOne = async (ipfsHash: string) => {
   return await File.findOne({ ipfsHash });
 };
+
+export const findPrivate = async (ipfsHash: string) => {
+  return await File.findOne({ ipfsHash, storageType: "pinata-private" });
+};

@@ -14,9 +14,16 @@ const pinataClient = pinataSDK(
   config.PINATA_SECRET_KEY as string
 );
 
+// Private files are served by the same dedicated-gateway domain as public
+// reads. PINATA_GATEWAY carries the public /ipfs path suffix; the SDK appends
+// /files/<cid> itself, so it must get the origin only.
+const privateGatewayDomain = ((config.PINATA_GATEWAY as string) ?? "")
+  .replace(/\/+$/, "")
+  .replace(/\/ipfs$/, "");
+
 const pinataPrivateClient = new PinataSDK({
   pinataJwt: config.PINATA_JWT_KEY as string,
-  pinataGateway: config.PINATA_GATEWAY as string,
+  pinataGateway: privateGatewayDomain,
 });
 
 const formatUploadResponse  = (file: PinataPinResponse) => { //formatter for older sdk cuz properties not same
@@ -45,6 +52,9 @@ const formatPrivateUploadResponse = (file: UploadResponse)=>{// formatter for pr
   return {
     ipfsUrl: `${config.BASE_URL}/private/gateway?cid=${file.cid}`,
     ipfsHash: file.cid,
+    // Pinata file id — the only handle files.private.delete() accepts;
+    // must be persisted or the pin is undeletable.
+    pinataId: file.id,
     storageType: "pinata-private",
     ipfsStorage: "pinata",
     pinSize: file.size,
@@ -165,4 +175,13 @@ export const uploadPrivate = async (
 
 export const getPrivateFile = async (cid: string) => {
     return pinataPrivateClient.gateways.private.get(cid);
+};
+
+export const unpinPrivate = async (pinataId: string) => {
+  try {
+    await pinataPrivateClient.files.private.delete([pinataId]);
+  } catch (err) {
+    console.error("error while deleting private file from pinata", err);
+    throw err;
+  }
 };

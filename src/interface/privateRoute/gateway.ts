@@ -3,6 +3,8 @@ import { CustomRequest } from "../../types";
 import { throwError } from "../../infra/errorHandler";
 import { validate, Joi } from "../middleware";
 import { getPrivateFile } from "../../domain/ipfs";
+import { findPrivate } from "../../domain/file";
+import { config } from "../../config";
 import {
   getCachedPrivateGatewayResponse,
   setCachedPrivateGatewayResponse,
@@ -10,9 +12,8 @@ import {
 } from "./gatewayCache";
 
 const gatewayValidation = {
-  headers: Joi.object({
-    contract: Joi.string().required(),
-    invoker: Joi.string().required(),
+  query: Joi.object({
+    cid: Joi.string().required(),
   }).unknown(true),
 };
 
@@ -45,30 +46,21 @@ const gateway = async (
   req: CustomRequest,
   res: Response
 ) => {
-  const { contractAddress, invokerAddress } = req;
-
-   if (!contractAddress || !invokerAddress ) {
-    return throwError({
-      code: 400,
-      message: "Invalid request",
-      req,
-    });
-  }
-
   const cid = req.query.cid as string;
-
-  if (!cid) {
-    return throwError({
-      code: 400,
-      message: "cid is required",
-      req,
-    });
-  }
 
   const cachedResponse = await getCachedPrivateGatewayResponse(cid);
 
   if (cachedResponse) {
     return sendGatewayResponse(res, cachedResponse);
+  }
+
+  // Per-CID lane lookup: mixed-storage docs are guaranteed (old public gate
+  // preserved next to new private content), so anything without a private
+  // File row falls back to the public gateway.
+  const privateFile = await findPrivate(cid);
+
+  if (!privateFile) {
+    return res.redirect(302, `${config.PINATA_GATEWAY}/${cid}`);
   }
 
   const response = await getPrivateFile(cid);

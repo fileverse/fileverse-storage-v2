@@ -80,16 +80,17 @@ export const uploadOnly = async (params: IUploadParams) => {
 export const uploadOnlyPrivate = async (params: IUploadParams) => {
   const { file, ipfsType } = params;
   const { name, mimetype, data } = file;
-  
+
   const ipfsFile = await uploadPrivateToPinata({
-    name, 
-    mimetype, 
+    name,
+    mimetype,
     data
   });
 
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,
     ipfsHash: ipfsFile?.ipfsHash,
+    pinataId: ipfsFile?.pinataId,
     ipfsStorage: ipfsFile?.ipfsStorage,
     fileSize: ipfsFile?.pinSize,
     mimetype,
@@ -120,6 +121,7 @@ export const uploadPrivate = async (params: IUploadParams) => {
     appFileId,
     ipfsHash: ipfsFile?.ipfsHash,
     gatewayUrl: ipfsFile?.ipfsUrl,
+    pinataId: ipfsFile?.pinataId,
     contractAddress,
     invokerAddress,
     fileSize: ipfsFile?.pinSize,
@@ -132,6 +134,7 @@ export const uploadPrivate = async (params: IUploadParams) => {
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,
     ipfsHash: ipfsFile?.ipfsHash,
+    pinataId: ipfsFile?.pinataId,
     ipfsStorage: ipfsFile?.ipfsStorage,
     fileSize: ipfsFile?.pinSize,
     mimetype,

@@ -4,6 +4,10 @@ import { getPrivateFile } from "../../domain/ipfs";
 import { config } from "../../config";
 
 const PRIVATE_GATEWAY_CACHE_TTL = config.PRIVATE_GATEWAY_CACHE_TTL?Number(config.PRIVATE_GATEWAY_CACHE_TTL):3600;
+// Doc parts are small; don't let large files (e.g. images) balloon Redis.
+const PRIVATE_GATEWAY_CACHE_MAX_BYTES = config.PRIVATE_GATEWAY_CACHE_MAX_BYTES
+  ? Number(config.PRIVATE_GATEWAY_CACHE_MAX_BYTES)
+  : 5 * 1024 * 1024;
 
 export type PrivateGatewayResponse = Awaited<ReturnType<typeof getPrivateFile>>;
 
@@ -41,6 +45,9 @@ const serializeResponse = async (
 
   try {
     if (typeof response.data === "string") {
+      if (Buffer.byteLength(response.data) > PRIVATE_GATEWAY_CACHE_MAX_BYTES) {
+        return null;
+      }
       return {
         kind: "string",
         data: response.data,
@@ -49,6 +56,9 @@ const serializeResponse = async (
     }
 
     if (isBlob(response.data)) {
+      if (response.data.size > PRIVATE_GATEWAY_CACHE_MAX_BYTES) {
+        return null;
+      }
       const buffer = Buffer.from(await response.data.arrayBuffer());
 
       return {
@@ -60,7 +70,7 @@ const serializeResponse = async (
 
     const data = JSON.stringify(response.data);
 
-    if (data == null) {
+    if (data == null || Buffer.byteLength(data) > PRIVATE_GATEWAY_CACHE_MAX_BYTES) {
       return null;
     }
 

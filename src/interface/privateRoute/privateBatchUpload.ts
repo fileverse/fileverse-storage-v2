@@ -46,6 +46,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
       appFileId,
       ipfsHash: ipfsFile.ipfsHash,
       gatewayUrl: ipfsFile.ipfsUrl,
+      pinataId: ipfsFile.pinataId,
       storageType: ipfsFile.storageType,
       contractAddress,
       invokerAddress,

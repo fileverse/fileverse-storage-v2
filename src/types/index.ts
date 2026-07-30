@@ -48,6 +48,7 @@ export interface IFile {
   invokerAddress: string;
   contractAddress: string;
   gatewayUrl: string;
+  pinataId?: string;
   appFileId: string;
   ipfsHash: string;
   storageType: string;
