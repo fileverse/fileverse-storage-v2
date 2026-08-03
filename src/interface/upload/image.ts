@@ -19,8 +19,9 @@ const uploadValidation = {
 // `contract` header; images on team-workspace portals go to private storage,
 // everything else stays public. Deliberately unauthenticated (same posture as
 // /upload/comment) — image uploaders include non-member editors, so the lane
-// is decided by the TARGET portal, not the writer. Image bytes are E2E
-// encrypted client-side either way.
+// is decided by the TARGET portal, not the writer. The payload is penumbra
+// ciphertext (typeless blob), so no server-side mimetype validation is
+// possible — the image/* gate runs client-side before encryption.
 async function uploadImageFn(req: CustomRequest, res: Response) {
   const file = isArray(req.files?.file) ? req.files.file[0] : req.files?.file;
 
@@ -28,14 +29,6 @@ async function uploadImageFn(req: CustomRequest, res: Response) {
     return throwError({
       code: 400,
       message: "No file uploaded",
-      req,
-    });
-  }
-
-  if (!file.mimetype.startsWith("image/")) {
-    return throwError({
-      code: 400,
-      message: "File must be an image",
       req,
     });
   }
