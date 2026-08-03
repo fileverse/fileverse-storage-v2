@@ -8,6 +8,7 @@ import { asyncHandler, asyncHandlerArray } from "../../infra/asyncHandler";
 import upload from "./upload";
 // import uploadPublic from "./public";
 import uploadComment from "./comment";
+import uploadImage from "./image";
 import uploadPublic from "./publicUpload";
 
 // middlewares
@@ -30,6 +31,15 @@ router.post(
 );
 
 router.post("/public", fileUpload(), asyncHandlerArray(uploadPublic));
+
+// Lane-aware image uploads (all ddocs images route through here; the target
+// portal decides the lane). Bytes are client-side encrypted; cap bounds
+// unauthenticated byte-pumping (no IP-based throttling — policy).
+router.post(
+  "/image",
+  fileUpload({ limits: { fileSize: 10 * 1024 * 1024 }, abortOnLimit: true }),
+  asyncHandlerArray(uploadImage)
+);
 
 router.post(
   "/batch",

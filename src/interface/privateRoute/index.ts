@@ -1,11 +1,10 @@
 import {Router} from 'express';
 import fileUpload from "express-fileupload";
 import { asyncHandler, asyncHandlerArray } from "../../infra/asyncHandler";
-import { isWorkspace, canPrivateUpload } from '../middleware';
+import { canPrivateUpload } from '../middleware';
 import privateBatchUpload from './privateBatchUpload';
 import gateway from './gateway';
 import privateUpload from './privateUpload';
-import uploadPrivateImageFn from './privateImageUpload';
 const router = Router();
 
 router.post(
@@ -35,11 +34,7 @@ router.get(
 // Comment uploads live on the lane-aware public route (`POST /upload/comment`),
 // which picks private storage per target portal — no separate private comment route.
 
-router.post(
-    "/image-private",
-    asyncHandler(isWorkspace),
-    fileUpload(),
-    asyncHandlerArray(uploadPrivateImageFn)
-);
+// Image uploads live on the lane-aware public route (`POST /upload/image`),
+// which picks private storage per target portal — no separate private image route.
 
 export default router;

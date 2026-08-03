@@ -18,6 +18,11 @@ const imageSchema = new Schema({
     type: String,
     required: true,
   },
+  // Pinata file id for private-lane images — the only handle
+  // files.private.delete() accepts. Absent on public images.
+  pinataId: {
+    type: String,
+  },
 });
 
 const Image = model("images", imageSchema);
