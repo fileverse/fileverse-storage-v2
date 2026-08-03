@@ -21,7 +21,13 @@ router.post(
   asyncHandlerArray(upload)
 );
 
-router.post("/comment", fileUpload(), asyncHandlerArray(uploadComment));
+// Comments are small JSON; the cap bounds unauthenticated byte-pumping into
+// private storage (no IP-based throttling — policy).
+router.post(
+  "/comment",
+  fileUpload({ limits: { fileSize: 256 * 1024 }, abortOnLimit: true }),
+  asyncHandlerArray(uploadComment)
+);
 
 router.post("/public", fileUpload(), asyncHandlerArray(uploadPublic));
 

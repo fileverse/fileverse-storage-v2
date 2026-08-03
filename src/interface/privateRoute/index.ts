@@ -4,7 +4,6 @@ import { asyncHandler, asyncHandlerArray } from "../../infra/asyncHandler";
 import { isWorkspace, canPrivateUpload } from '../middleware';
 import privateBatchUpload from './privateBatchUpload';
 import gateway from './gateway';
-import uploadPrivateCommentFn from "./comment";
 import uploadPrivateImageFn from './privateImageUpload';
 const router = Router();
 
@@ -24,12 +23,8 @@ router.get(
     asyncHandlerArray(gateway)
 );
 
-router.post(
-    "/comment-private",
-    asyncHandler(isWorkspace), //right now tis is checking isAuthenticated along with isWorkspace ... unlike the public comment route which doesnt care for auth
-    fileUpload(),
-    asyncHandlerArray(uploadPrivateCommentFn)
-);
+// Comment uploads live on the lane-aware public route (`POST /upload/comment`),
+// which picks private storage per target portal — no separate private comment route.
 
 router.post(
     "/image-private",
