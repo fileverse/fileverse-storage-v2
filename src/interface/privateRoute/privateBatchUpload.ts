@@ -5,6 +5,7 @@ import { CustomRequest, FileIPFSType } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
 import { BatchUploadResponse, getIPFSTypeFromFileName } from "../upload/common";
+import { warmPrivateGatewayCache } from "./gatewayCache";
 
 const batchUploadValidation = {
   headers: Joi.object({
@@ -39,6 +40,14 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
     })
   );
   const uploadedFiles = await Promise.all(uploadPromises);
+
+  // Fire-and-forget warm-on-write (uploadPromises preserves files order); a
+  // failure here just means a cold first read.
+  uploadedFiles.forEach((ipfsFile, i) => {
+    if (ipfsFile?.ipfsHash && files[i]?.data) {
+      void warmPrivateGatewayCache(ipfsFile.ipfsHash, files[i].data, files[i].mimetype);
+    }
+  });
   console.log(`response after successful upload`,uploadedFiles);
   console.log("uploading successfull...before writing to mongodb")
   const dbPromises = uploadedFiles.map((ipfsFile) =>
