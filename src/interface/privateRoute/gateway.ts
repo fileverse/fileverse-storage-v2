@@ -4,6 +4,7 @@ import { throwError } from "../../infra/errorHandler";
 import { validate, Joi } from "../middleware";
 import { getPrivateFile } from "../../domain/ipfs";
 import { findPrivate } from "../../domain/file";
+import { findPrivateImage } from "../../domain/image";
 import { config } from "../../config";
 import {
   getCachedPrivateGatewayResponse,
@@ -58,8 +59,11 @@ const gateway = async (
   // preserved next to new private content), so anything without a private
   // File row falls back to the public gateway.
   const privateFile = await findPrivate(cid);
+  // Images ride the Image collection (no File row) — check it before falling
+  // back public, or every private-image read 302s to a gateway without the CID.
+  const privateImage = privateFile ? null : await findPrivateImage(cid);
 
-  if (!privateFile) {
+  if (!privateFile && !privateImage) {
     return res.redirect(302, `${config.PINATA_GATEWAY}/${cid}`);
   }
 
