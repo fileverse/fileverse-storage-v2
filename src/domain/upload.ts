@@ -131,14 +131,9 @@ export const uploadPrivate = async (params: IUploadParams) => {
     storageType: ipfsFile?.storageType
   });
 
+  // Callers (comment + private single-file routes) read only ipfsHash; no
+  // URL or internal fields leave the private lane.
   return {
-    ipfsUrl: ipfsFile?.ipfsUrl,
     ipfsHash: ipfsFile?.ipfsHash,
-    pinataId: ipfsFile?.pinataId,
-    ipfsStorage: ipfsFile?.ipfsStorage,
-    fileSize: ipfsFile?.pinSize,
-    mimetype,
-    ipfsType,
-    storageType: ipfsFile?.storageType
   };
 };

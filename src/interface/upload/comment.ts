@@ -24,7 +24,7 @@ const commentSchema = Joi.object({
 // `contract` header; comments targeting a team-workspace portal go to private
 // storage, everything else stays public. The route is deliberately unauthenticated
 // in this version — the lane is decided by the TARGET portal, not the writer.
-// See docs/superpowers/specs/2026-07-31-workspace-private-comments-design.md (ddocs.new).
+// See docs/architecture/workspace-private-ipfs.md (ddocs.new).
 async function uploadCommentFn(req: CustomRequest, res: Response) {
   const file = isArray(req.files?.file) ? req.files?.file[0] : req.files?.file;
 
@@ -83,8 +83,10 @@ async function uploadCommentFn(req: CustomRequest, res: Response) {
     });
   }
 
+  // Clients read only ipfsHash + storageLane; no internal fields (pinataId,
+  // storageType, ipfsUrl) — this route is open.
   res.json({
-    ...createdFile,
+    ipfsHash: createdFile.ipfsHash,
     storageLane: isWorkspacePortal ? "private" : "public",
   });
 }

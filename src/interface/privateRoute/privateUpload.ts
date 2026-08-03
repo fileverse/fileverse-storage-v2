@@ -52,7 +52,9 @@ const privateUploadFn = async (req: CustomRequest, res: Response) => {
     });
   }
 
-  res.json(createdFile);
+  // Clients read only ipfsHash (worker unwraps response.data.ipfsHash); no
+  // URL or internal fields (pinataId, storageType) on the private lane.
+  res.json({ ipfsHash: createdFile.ipfsHash });
 };
 
 export default [validate(uploadValidation), privateUploadFn];
