@@ -1,4 +1,4 @@
-export { get, unpin } from "./ipfs";
+export { get, unpin, unpinPrivate } from "./ipfs";
 export { getCollaboratorKeys } from "./contract";
 export { getStorageStatus, getStorageUse, extendStorage } from "./limit";
 export { create, getSizeByContract, findAll, findOne } from "./file";

@@ -12,11 +12,14 @@ const fileSchema = new Schema({
   },
   gatewayUrl: {
     type: String,
-    required: true,
+    required: true
   },
   appFileId: { type: String, index: false },
   networkName: { type: String, default: config.NETWORK_NAME },
-  ipfsHash: { type: String },
+  ipfsHash: { type: String, index: true },
+  storageType: { type: String },
+  // Pinata file id for private uploads — required to delete a private pin.
+  pinataId: { type: String },
   fileSize: { type: Number },
   isDeleted: { type: Boolean, default: false },
   isPinned: { type: Boolean, default: false },

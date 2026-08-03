@@ -1,0 +1,1 @@
+export { hashFilename } from "./hashFileName";

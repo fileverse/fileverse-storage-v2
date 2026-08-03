@@ -1,6 +1,6 @@
 import { Readable } from "stream";
 import { create } from "./file";
-import { upload as uploadToPinata } from "./ipfs";
+import { upload as uploadPublicToPinata, uploadPrivate as uploadPrivateToPinata} from "./ipfs";
 import { FileIPFSType, SourceApp } from "../types";
 
 interface IUploadParams {
@@ -12,6 +12,7 @@ interface IUploadParams {
   tags: string[];
   ipfsType: FileIPFSType;
 }
+
 
 export const upload = async (params: IUploadParams) => {
   const {
@@ -28,7 +29,7 @@ export const upload = async (params: IUploadParams) => {
   const stream = Readable.from(data, { objectMode: false });
   Object.assign(stream, { path: name });
 
-  const ipfsFile = await uploadToPinata(stream, { name });
+  const ipfsFile = await uploadPublicToPinata(stream, { name });
 
   await create({
     appFileId,
@@ -40,6 +41,7 @@ export const upload = async (params: IUploadParams) => {
     tags: tags || [],
     sourceApp,
     ipfsType,
+    storageType: ipfsFile?.storageType
   });
 
   return {
@@ -51,6 +53,7 @@ export const upload = async (params: IUploadParams) => {
     appFileId,
     contractAddress,
     ipfsType,
+    storageType: ipfsFile?.storageType
   };
 };
 
@@ -61,7 +64,7 @@ export const uploadOnly = async (params: IUploadParams) => {
   const stream = Readable.from(data, { objectMode: false });
   Object.assign(stream, { path: name });
 
-  const ipfsFile = await uploadToPinata(stream, { name });
+  const ipfsFile = await uploadPublicToPinata(stream, { name });
 
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,
@@ -70,5 +73,67 @@ export const uploadOnly = async (params: IUploadParams) => {
     fileSize: ipfsFile?.pinSize,
     mimetype,
     ipfsType,
+    storageType: ipfsFile?.storageType
+  };
+};
+
+export const uploadOnlyPrivate = async (params: IUploadParams) => {
+  const { file, ipfsType } = params;
+  const { name, mimetype, data } = file;
+
+  const ipfsFile = await uploadPrivateToPinata({
+    name,
+    mimetype,
+    data
+  });
+
+  return {
+    ipfsUrl: ipfsFile?.ipfsUrl,
+    ipfsHash: ipfsFile?.ipfsHash,
+    pinataId: ipfsFile?.pinataId,
+    ipfsStorage: ipfsFile?.ipfsStorage,
+    fileSize: ipfsFile?.pinSize,
+    mimetype,
+    ipfsType,
+    storageType: ipfsFile?.storageType
+  };
+};
+
+export const uploadPrivate = async (params: IUploadParams) => {
+  const {
+    appFileId,
+    sourceApp,
+    contractAddress,
+    file,
+    invokerAddress,
+    tags,
+    ipfsType,
+  } = params;
+  const { name, mimetype, data } = file;
+
+  const ipfsFile = await uploadPrivateToPinata({
+    name, 
+    mimetype, 
+    data
+  });
+
+  await create({
+    appFileId,
+    ipfsHash: ipfsFile?.ipfsHash,
+    gatewayUrl: ipfsFile?.ipfsUrl,
+    pinataId: ipfsFile?.pinataId,
+    contractAddress,
+    invokerAddress,
+    fileSize: ipfsFile?.pinSize,
+    tags: tags || [],
+    sourceApp,
+    ipfsType,
+    storageType: ipfsFile?.storageType
+  });
+
+  // Callers (comment + private single-file routes) read only ipfsHash; no
+  // URL or internal fields leave the private lane.
+  return {
+    ipfsHash: ipfsFile?.ipfsHash,
   };
 };

@@ -1,6 +1,7 @@
 export { validate, Joi, ValidationError } from "./validator";
 export { canView } from "./canView";
 export { canUpload } from "./canUpload";
+export { canPrivateUpload } from "./canPrivateUpload";
 export { expressErrorHandler } from "./errorHandler";
 export { canCheckLimit } from "./canCheckLimit";
 export { canUpdateLimit } from "./canUpdateLimit";
@@ -8,3 +9,4 @@ export { canCheckLimitUse } from "./canCheckLimitUse";
 export { isAuthenticated } from "./isAuthenticated";
 export { canDelete } from "./canDelete";
 export { webhookAuth } from "./webhookAuth";
+export { isWorkspace } from "./isWorkspace";
