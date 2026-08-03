@@ -4,6 +4,7 @@ import { asyncHandler, asyncHandlerArray } from "../../infra/asyncHandler";
 import { isWorkspace, canPrivateUpload } from '../middleware';
 import privateBatchUpload from './privateBatchUpload';
 import gateway from './gateway';
+import privateUpload from './privateUpload';
 import uploadPrivateImageFn from './privateImageUpload';
 const router = Router();
 
@@ -12,6 +13,14 @@ router.post(
     asyncHandler(canPrivateUpload),
     fileUpload(),
     asyncHandlerArray(privateBatchUpload)
+);
+
+// Single-file counterpart of /batch — workspace folder metadata uploads.
+router.post(
+    "/upload",
+    asyncHandler(canPrivateUpload),
+    fileUpload(),
+    asyncHandlerArray(privateUpload)
 );
 
 // Open read route: anonymous public-link viewers fetch private bytes here.
