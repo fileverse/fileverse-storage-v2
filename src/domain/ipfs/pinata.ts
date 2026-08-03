@@ -50,7 +50,9 @@ const formatPublicUploadResponse = (file: UploadResponse) => { //formatter for p
 
 const formatPrivateUploadResponse = (file: UploadResponse)=>{// formatter for private upload newer sdk
   return {
-    ipfsUrl: `${config.BASE_URL}/private/gateway?cid=${file.cid}`,
+    // Relative proxy path — persisted as File.gatewayUrl (write-only
+    // bookkeeping, required by the schema); never returned to clients.
+    ipfsUrl: `/private/gateway?cid=${file.cid}`,
     ipfsHash: file.cid,
     // Pinata file id — the only handle files.private.delete() accepts;
     // must be persisted or the pin is undeletable.
