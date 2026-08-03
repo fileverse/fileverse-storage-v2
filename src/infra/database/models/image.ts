@@ -14,10 +14,6 @@ const imageSchema = new Schema({
     type: String,
     required: true,
   },
-  apiKey: {
-    type: String,
-    required: true,
-  },
   // Pinata file id for private-lane images — the only handle
   // files.private.delete() accepts. Absent on public images.
   pinataId: {

@@ -27,7 +27,6 @@ export const uploadImage = async ({
     hash: ipfsFile.ipfsHash,
     origin,
     gateway: config.PINATA_GATEWAY!,
-    apiKey: config.NEW_PINATA_API_KEY!,
   });
 
   return {
@@ -52,12 +51,13 @@ export const uploadPrivateImage = async ({
     hash: ipfsFile.ipfsHash,
     origin,
     gateway: config.PINATA_GATEWAY!,
-    apiKey: config.NEW_PINATA_API_KEY!,
     pinataId: ipfsFile.pinataId,
   });
 
+  // No URL on the private lane — clients derive the byte-proxy URL from the
+  // hash themselves.
   return {
-    url: ipfsFile.ipfsUrl,
+    url: "",
     hash: ipfsFile.ipfsHash,
   };
 };
