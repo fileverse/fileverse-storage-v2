@@ -33,15 +33,18 @@ export const canPrivateUpload = async (
     });
   }
 
+  // Positive-only cache (key shared with resolveIsWorkspaceCached): a
+  // memorized "no" from identity-indexer lag would 403 a fresh workspace's
+  // publishes for a full TTL.
   const cacheKey = `workspace:${contractAddress.toLowerCase()}`;
   const cached = await getCache(cacheKey);
-  let isWorkspace: boolean;
+  let isWorkspace = cached === "true";
 
-  if (cached != null) {
-    isWorkspace = cached === "true";
-  } else {
+  if (!isWorkspace) {
     isWorkspace = await checkIsWorkspace(contractAddress);
-    await setCache(cacheKey, String(isWorkspace), Number(config.WORKSPACE_STATUS_TTL));
+    if (isWorkspace) {
+      await setCache(cacheKey, "true", Number(config.WORKSPACE_STATUS_TTL));
+    }
   }
 
   if (!isWorkspace) {
