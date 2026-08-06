@@ -1,4 +1,4 @@
-import { uploadPrivate as uploadPrivateToPinata, uploadPublic as uploadPublicToPinata } from "./ipfs";
+import { uploadPrivate as uploadPrivateToPinata, uploadPublicImage as uploadPublicImageToPinata } from "./ipfs";
 import { create as createImage } from "./image";
 import { config } from "../config"
 
@@ -15,18 +15,17 @@ export const uploadImage = async ({
   file,
   origin,
 }: IUploadImageParams) => {
-  const { name, mimetype, data } = file;
+  const { name, data } = file;
 
-  const ipfsFile = await uploadPublicToPinata({
+  const ipfsFile = await uploadPublicImageToPinata({
     name,
-    mimetype,
     data,
   });
 
   await createImage({
     hash: ipfsFile.ipfsHash,
     origin,
-    gateway: config.PINATA_GATEWAY!,
+    gateway: ipfsFile.gateway,
   });
 
   return {

@@ -26,6 +26,19 @@ const pinataPrivateClient = new PinataSDK({
   pinataGateway: privateGatewayDomain,
 });
 
+// Public images pin to the dedicated image Pinata account — the same
+// credentials and gateway the fileverse-images service used, separate from
+// the storage account above.
+const pinataImageClient = pinataSDK(
+  config.PINATA_IMAGE_API_KEY as string,
+  config.PINATA_IMAGE_SECRET_KEY as string
+);
+
+const imageGateway = ((config.PINATA_IMAGE_GATEWAY as string) ?? "").replace(
+  /\/+$/,
+  ""
+);
+
 const formatUploadResponse  = (file: PinataPinResponse) => { //formatter for older sdk cuz properties not same
   return {
     ipfsUrl: `${config.PINATA_GATEWAY}/${file.IpfsHash}`,
@@ -33,17 +46,6 @@ const formatUploadResponse  = (file: PinataPinResponse) => { //formatter for old
     storageType: "pinata-public",
     ipfsStorage: "pinata",
     pinSize: file.PinSize,
-    timestamp: new Date().toISOString(),
-  };
-};
-
-const formatPublicUploadResponse = (file: UploadResponse) => { //formatter for public upload newer sdk
-  return {
-    ipfsUrl: `${config.PINATA_GATEWAY}/${file.cid}`,
-    ipfsHash: file.cid,
-    storageType: "pinata-public",
-    ipfsStorage: "pinata",
-    pinSize: file.size,
     timestamp: new Date().toISOString(),
   };
 };
@@ -105,31 +107,38 @@ export const upload = async (
 };
 
 
-// newer sdk public upload funtion (unused for now)
-export const uploadPublic = async (
-  file: {
-    name:string;
-    mimetype: string;
-    data: Buffer;
-    }
-)=>{
-  try{
-    const pinataFile=new File(
-      [new Uint8Array(file.data)],
-      file.name,
-      {
-        type: file.mimetype,
-      }
-    );
-    const uploadedFile = await pinataPrivateClient.upload.public.file(pinataFile).name(file.name);
-    return formatPublicUploadResponse(uploadedFile);
-  }
-  catch(err){
-    console.error("error while uploading public file", err);
-    logger.error(`error while uploading public file: ${err}`);
+// Public image upload — image account, legacy sdk (same call shape the
+// fileverse-images service used; filename is already hashed by the route).
+export const uploadPublicImage = async (file: {
+  name: string;
+  data: Buffer;
+}) => {
+  const stream = Readable.from(file.data, { objectMode: false });
+  Object.assign(stream, { path: file.name });
+
+  const options: PinataPinOptions = {
+    pinataMetadata: {
+      name: file.name,
+    },
+    pinataOptions: {
+      cidVersion: 0,
+    },
+  };
+
+  try {
+    const uploaded = await pinataImageClient.pinFileToIPFS(stream, options);
+    return {
+      ipfsUrl: `${imageGateway}/${uploaded.IpfsHash}`,
+      ipfsHash: uploaded.IpfsHash,
+      gateway: imageGateway,
+      pinSize: uploaded.PinSize,
+    };
+  } catch (err) {
+    console.error("error while uploading public image", err);
+    logger.error(`error while uploading public image: ${err}`);
     throw err;
   }
-}
+};
 
 export const get = async (ipfsUrl: string) => {
   if (!ipfsUrl) {
