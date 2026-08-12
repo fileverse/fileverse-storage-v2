@@ -1,3 +1,4 @@
+import { timeStamp } from "console";
 import { config } from "../../config";
 import { File, Limit } from "../../infra/database/models";
 import { FileIPFSType, IFile } from "../../types";
@@ -60,6 +61,45 @@ export const create = async (params: ICreateFileParams) => {
 
   // People are hitting ceiling too fast
   if (newFile.ipfsType === FileIPFSType.CONTENT) {
+    const currentContentHashCount = await File.countDocuments({
+      appFileId: params.appFileId,
+      ipfsType: FileIPFSType.CONTENT,
+      contractAddress: params.contractAddress,
+      markedForUnpin: false,
+      isPinned: true,
+    });
+    
+    if( currentContentHashCount > Number(config.MAX_CONTENT_HISTORY_COUNT) ){
+      const fileIdsToKeep = await File.find({
+        appFileId: params.appFileId,
+        ipfsType: FileIPFSType.CONTENT,
+        contractAddress: params.contractAddress,
+        markedForUnpin: false,
+        isPinned: true,
+      })
+        .sort({timeStamp: -1})
+        .limit(Number(config.MAX_CONTENT_HISTORY_COUNT))
+        .select("_id");
+
+      await File.updateMany(
+        {
+          appFileId: params.appFileId,
+          ipfsType: FileIPFSType.CONTENT,
+          contractAddress: params.contractAddress,
+          markedForUnpin: false,
+          isPinned: true,
+          _id: {
+            $nin: [...fileIdsToKeep.map((f) => f._id), newFile._id],
+          },
+        },
+        {
+          $set: {
+            markedForUnpin: true,
+          },
+        }
+      );
+    }
+
     await Limit.updateOne(
       { contractAddress },
       {
