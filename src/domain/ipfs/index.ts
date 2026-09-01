@@ -1,1 +1,1 @@
-export { upload, uploadPublicImage, get, unpin, unpinPrivate, uploadPrivate, getPrivateFile } from "./pinata";
+export { upload, uploadPublicImage, unpin, unpinPublic, unpinPrivate, uploadPrivate, getPrivateFile } from "./pinata";
