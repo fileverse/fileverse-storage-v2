@@ -1,14 +1,12 @@
-import { PassThrough,Readable } from "stream";
-import request from "request";
+import { Readable } from "stream";
 import { config } from "../../config";
-import pinataSDK, {
-  type PinataPinOptions,
-  type PinataPinResponse,
-} from "@pinata/sdk";
+import pinataSDK, { type PinataPinOptions } from "@pinata/sdk";
 import { PinataSDK, type UploadResponse } from "pinata";
 import { logger } from "../../infra/logger";
 
 
+// Legacy SDK client: kept only for unpin-by-CID of public rows created before
+// the Files API migration (no pinataId stored). New uploads never use it.
 const pinataClient = pinataSDK(
   config.PINATA_API_KEY as string,
   config.PINATA_SECRET_KEY as string
@@ -21,7 +19,9 @@ const privateGatewayDomain = ((config.PINATA_GATEWAY as string) ?? "")
   .replace(/\/+$/, "")
   .replace(/\/ipfs$/, "");
 
-const pinataPrivateClient = new PinataSDK({
+// Files API client (JWT auth): private lane, and public uploads since the
+// legacy-SDK migration. Must stay on the same Pinata account as pinataClient.
+const pinataFilesClient = new PinataSDK({
   pinataJwt: config.PINATA_JWT_KEY as string,
   pinataGateway: privateGatewayDomain,
 });
@@ -39,13 +39,17 @@ const imageGateway = ((config.PINATA_IMAGE_GATEWAY as string) ?? "").replace(
   ""
 );
 
-const formatUploadResponse  = (file: PinataPinResponse) => { //formatter for older sdk cuz properties not same
+const formatUploadResponse = (file: UploadResponse) => {
   return {
-    ipfsUrl: `${config.PINATA_GATEWAY}/${file.IpfsHash}`,
-    ipfsHash: file.IpfsHash,
+    ipfsUrl: `${config.PINATA_GATEWAY}/${file.cid}`,
+    ipfsHash: file.cid,
+    // Pinata file id: the only handle files.public.delete() accepts; must be
+    // persisted or the pin is undeletable (legacy rows without it fall back
+    // to unpin-by-CID in the crons).
+    pinataId: file.id,
     storageType: "pinata-public",
     ipfsStorage: "pinata",
-    pinSize: file.PinSize,
+    pinSize: file.size,
     timestamp: new Date().toISOString(),
   };
 };
@@ -66,39 +70,23 @@ const formatPrivateUploadResponse = (file: UploadResponse)=>{// formatter for pr
   };
 };
 
-interface UploadToPinataOptions {
+// Public upload via the Files API. Returns CIDv1 (bafy...) hashes; legacy
+// rows and onchain records keep their Qm strings, so both formats coexist.
+// Clients and gateways treat CIDs as opaque, format-agnostic strings.
+export const upload = async (file: {
   name: string;
-  attributes?: { trait_type: string; value: string }[];
-}
-
-// older sdk upload function (public upload)
-export const upload = async ( 
-  readableStreamForFile: Readable,
-  { name, attributes }: UploadToPinataOptions
-) => {
-  const keyvalues: Record<string, string> = {};
-
-  (attributes || []).forEach((attribute) => {
-    keyvalues[attribute.trait_type] = attribute.value;
-  });
-
-  const options: PinataPinOptions = {
-    pinataMetadata: {
-      name,
-      ...keyvalues,
-    },
-    pinataOptions: {
-      cidVersion: 0,
-    },
-  };
-
+  mimetype: string;
+  data: Buffer;
+}) => {
   try {
-    const file = await pinataClient.pinFileToIPFS(
-      readableStreamForFile,
-      options
-    );
+    const pinataFile = new File([new Uint8Array(file.data)], file.name, {
+      type: file.mimetype,
+    });
+    const uploadedFile = await pinataFilesClient.upload.public
+      .file(pinataFile)
+      .name(file.name);
 
-    return formatUploadResponse (file);
+    return formatUploadResponse(uploadedFile);
   } catch (err) {
     console.error("error while uploading to pinata", err);
     logger.error(`error while uploading to pinata: ${err}`);
@@ -140,20 +128,51 @@ export const uploadPublicImage = async (file: {
   }
 };
 
-export const get = async (ipfsUrl: string) => {
-  if (!ipfsUrl) {
-    return null;
-  }
-  const ipfsStream = new PassThrough();
-  request(ipfsUrl).pipe(ipfsStream);
-  return ipfsStream;
-};
-
+// Legacy unpin-by-CID: only for public rows with no pinataId (uploaded via the
+// old pinning API). Rows created by the Files API are deleted by id below.
 export const unpin = async (ipfsHash: string) => {
   try {
     await pinataClient.unpin(ipfsHash);
   } catch (err) {
     console.error("error while unpinning from pinata", err);
+    throw err;
+  }
+};
+
+// The SDK's files.*.delete() resolves even when a delete fails: it catches each
+// per-id error and returns it as a `status` string, collapsing 404 and 5xx into
+// the same message. The unpin crons must be able to both detect failure (or they
+// mark a live pin as unpinned forever) and recognise an already-gone file (or
+// they retry it forever), so the delete goes out directly.
+const deletePinataFile = async (
+  lane: "public" | "private",
+  pinataId: string
+) => {
+  const res = await fetch(
+    `https://api.pinata.cloud/v3/files/${lane}/${pinataId}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${config.PINATA_JWT_KEY}` },
+    }
+  );
+
+  // 404: already deleted, which is the state the caller wanted. Mirrors the
+  // legacy path's CURRENT_USER_HAS_NOT_PINNED_CID handling.
+  if (res.ok || res.status === 404) {
+    return;
+  }
+
+  const body = await res.text().catch(() => "");
+  throw new Error(
+    `pinata delete ${lane}/${pinataId} failed: ${res.status} ${body.slice(0, 200)}`
+  );
+};
+
+export const unpinPublic = async (pinataId: string) => {
+  try {
+    await deletePinataFile("public", pinataId);
+  } catch (err) {
+    console.error("error while deleting public file from pinata", err);
     throw err;
   }
 };
@@ -174,7 +193,7 @@ export const uploadPrivate = async (
         type: file.mimetype,
       }
     );
-    const uploadedFile = await pinataPrivateClient.upload.private.file(pinataFile).name(file.name);
+    const uploadedFile = await pinataFilesClient.upload.private.file(pinataFile).name(file.name);
     return formatPrivateUploadResponse(uploadedFile);
   }
   catch(err){
@@ -185,12 +204,12 @@ export const uploadPrivate = async (
 }
 
 export const getPrivateFile = async (cid: string) => {
-    return pinataPrivateClient.gateways.private.get(cid);
+    return pinataFilesClient.gateways.private.get(cid);
 };
 
 export const unpinPrivate = async (pinataId: string) => {
   try {
-    await pinataPrivateClient.files.private.delete([pinataId]);
+    await deletePinataFile("private", pinataId);
   } catch (err) {
     console.error("error while deleting private file from pinata", err);
     throw err;

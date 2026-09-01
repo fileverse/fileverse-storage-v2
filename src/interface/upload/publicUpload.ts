@@ -3,7 +3,6 @@ import { isArray } from "util";
 import { upload as uploadToPinata } from "../../domain/ipfs";
 import { CustomRequest } from "../../types";
 import { throwError } from "../../infra/errorHandler";
-import { Readable } from "stream";
 
 const uploadPublicFn = async (req: CustomRequest, res: Response) => {
   const file = isArray(req.files?.file) ? req.files?.file[0] : req.files?.file;
@@ -15,16 +14,20 @@ const uploadPublicFn = async (req: CustomRequest, res: Response) => {
     });
   }
 
-  const { name, data } = file;
+  const { name, mimetype, data } = file;
 
-  // Create a readable stream from file data
-  const stream = Readable.from(data);
+  const ipfsFile = await uploadToPinata({ name, mimetype, data });
 
-  // Set path property using Object.assign since path is not a standard Readable property
-  Object.assign(stream, { path: name });
-  const ipfsFile = await uploadToPinata(stream, { name });
-
-  res.json(ipfsFile);
+  // Pre-migration response shape; pinataId stays internal (this route creates
+  // no DB row, its files are permanent by design).
+  res.json({
+    ipfsUrl: ipfsFile.ipfsUrl,
+    ipfsHash: ipfsFile.ipfsHash,
+    storageType: ipfsFile.storageType,
+    ipfsStorage: ipfsFile.ipfsStorage,
+    pinSize: ipfsFile.pinSize,
+    timestamp: ipfsFile.timestamp,
+  });
 };
 
 export default [uploadPublicFn];

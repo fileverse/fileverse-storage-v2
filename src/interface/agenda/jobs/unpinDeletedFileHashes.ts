@@ -2,7 +2,7 @@ import { Job } from "agenda";
 import { agenda } from "../";
 import { logger } from "../../../infra/logger";
 import { File } from "../../../infra/database/models";
-import { unpin, unpinPrivate } from "../../../domain";
+import { unpin, unpinPublic, unpinPrivate } from "../../../domain";
 import { updatePinningStatus } from "../../../domain/file/updatePinningStatus";
 
 const JOB_NAME = "UNPIN_DELETED_FILE_HASH_CRON";
@@ -58,7 +58,14 @@ async function unpinDeletedFileHashes() {
             `Private file ${file.ipfsHash} has no pinataId; cannot delete`
           );
         }
+      } else if (file.pinataId) {
+        // Public row created via the Files API: delete by file id.
+        await unpinPublic(file.pinataId);
+        unpinnedFileIds.push(mongoObjectId);
+        await waitFor(300);
+        logger.info(`Deleted public ${file.ipfsHash}`);
       } else if (file.ipfsHash) {
+        // Pre-migration public row: legacy unpin-by-CID.
         await unpin(file.ipfsHash);
         unpinnedFileIds.push(mongoObjectId);
         await waitFor(300);

@@ -18,7 +18,10 @@ const fileSchema = new Schema({
   networkName: { type: String, default: config.NETWORK_NAME },
   ipfsHash: { type: String, index: true },
   storageType: { type: String },
-  // Pinata file id for private uploads — required to delete a private pin.
+  // Pinata file id for Files-API uploads (private lane, and public since the
+  // legacy-SDK migration) — required to delete the pin. Absent on public rows
+  // predating that migration, which the unpin crons fall back to unpinning by
+  // CID; do not backfill it without confirming delete-by-id works on old pins.
   pinataId: { type: String },
   fileSize: { type: Number },
   isDeleted: { type: Boolean, default: false },
