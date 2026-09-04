@@ -1,5 +1,6 @@
 import { Response } from "express";
 import { uploadOnlyPrivate } from "../../domain/upload";
+import { parsePrivateStorageProvider } from "../../domain/ipfs";
 import { create } from "../../domain/file";
 import { CustomRequest, FileIPFSType } from "../../types";
 import { validate, Joi } from "../middleware";
@@ -14,6 +15,11 @@ const batchUploadValidation = {
     contract: Joi.string().required(),
     invoker: Joi.string().required(),
   }).unknown(true),
+  // storageProvider=node: temporary opt-in that sends this upload to the
+  // Fileverse ipfs-node instead of Pinata (trial); absent = Pinata.
+  query: Joi.object({
+    storageProvider: Joi.string().valid("node", "pinata").optional(),
+  }).unknown(true),
 };
 
 // Heroku's router aborts at 30s (H12); warn early enough to see the trend.
@@ -23,6 +29,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
   const { contractAddress, invokerAddress } = req;
   const files = Array.isArray(req.files?.files) ? req.files?.files : [];
   const { appFileId, sourceApp } = req.body;
+  const storageProvider = parsePrivateStorageProvider(req.query.storageProvider);
 
   if (!contractAddress || !invokerAddress || !files || files?.length === 0) {
     return throwError({
@@ -49,6 +56,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
       contractAddress,
       invokerAddress,
       tags: [],
+      storageProvider,
     });
     perFile.push({
       ipfsType: uploaded.ipfsType,
@@ -91,6 +99,7 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
   const timing = {
     event: "batch_upload",
     lane: "private",
+    storageProvider,
     requestId: req.requestId,
     contractAddress,
     appFileId,

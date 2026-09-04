@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { isArray } from "util";
 import { uploadPrivate } from "../../domain/upload";
+import { parsePrivateStorageProvider } from "../../domain/ipfs";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
@@ -11,6 +12,9 @@ const uploadValidation = {
   }).unknown(true),
   query: Joi.object({
     tags: Joi.array().items(Joi.string()).optional(),
+    // storageProvider=node: temporary opt-in that sends this upload to the
+    // Fileverse ipfs-node instead of Pinata (trial); absent = Pinata.
+    storageProvider: Joi.string().valid("node", "pinata").optional(),
   }),
 };
 
@@ -39,6 +43,7 @@ const privateUploadFn = async (req: CustomRequest, res: Response) => {
     invokerAddress,
     file: file,
     tags: tags as string[],
+    storageProvider: parsePrivateStorageProvider(req.query.storageProvider),
   }).catch((err) => {
     console.error("private upload failed: ", err?.message || err);
     return null;

@@ -2,7 +2,7 @@ import { Response } from "express";
 import { CustomRequest } from "../../types";
 import { throwError } from "../../infra/errorHandler";
 import { validate, Joi } from "../middleware";
-import { getPrivateFile } from "../../domain/ipfs";
+import { getPrivateFileByStorageType } from "../../domain/ipfs";
 import { findPrivate } from "../../domain/file";
 import { findPrivateImage } from "../../domain/image";
 import { config } from "../../config";
@@ -67,7 +67,12 @@ const gateway = async (
     return res.redirect(302, `${config.PINATA_GATEWAY}/${cid}`);
   }
 
-  const response = await getPrivateFile(cid);
+  // Provider follows the row; private images have no File row and stay on
+  // Pinata.
+  const response = await getPrivateFileByStorageType(
+    cid,
+    privateFile?.storageType
+  );
 
   if (response.data == null) {
     return throwError({
