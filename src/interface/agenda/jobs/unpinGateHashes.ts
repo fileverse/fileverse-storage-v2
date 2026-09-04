@@ -3,7 +3,12 @@ import { agenda } from "../";
 import { logger } from "../../../infra/logger";
 import { File } from "../../../infra/database/models";
 import { FileIPFSType } from "../../../types";
-import { unpin, unpinPublic, unpinPrivate } from "../../../domain";
+import {
+  unpin,
+  unpinPublic,
+  isPrivateStorageType,
+  unpinPrivateByStorageType,
+} from "../../../domain";
 import { updatePinningStatus } from "../../../domain/file/updatePinningStatus";
 const JOB_NAME = "UNPIN_GATE_HASH_CRON";
 
@@ -38,9 +43,9 @@ async function unpinGateHashes() {
   for (const file of files) {
     const mongoObjectId = file._id.toString();
     try {
-      if (file.storageType === "pinata-private") {
+      if (isPrivateStorageType(file.storageType)) {
         if (file.pinataId) {
-          await unpinPrivate(file.pinataId);
+          await unpinPrivateByStorageType(file.pinataId, file.storageType);
           await updatePinningStatus(mongoObjectId, false);
           logger.info(`Deleted private ${file.ipfsHash}`);
         } else {

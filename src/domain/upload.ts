@@ -1,5 +1,9 @@
 import { create } from "./file";
-import { upload as uploadPublicToPinata, uploadPrivate as uploadPrivateToPinata} from "./ipfs";
+import {
+  upload as uploadPublicToPinata,
+  uploadPrivateFile,
+  type PrivateStorageProvider,
+} from "./ipfs";
 import { FileIPFSType, SourceApp } from "../types";
 
 interface IUploadParams {
@@ -10,6 +14,8 @@ interface IUploadParams {
   invokerAddress: string;
   tags: string[];
   ipfsType: FileIPFSType;
+  // Private lane only; absent = Pinata.
+  storageProvider?: PrivateStorageProvider;
 }
 
 
@@ -73,14 +79,13 @@ export const uploadOnly = async (params: IUploadParams) => {
 };
 
 export const uploadOnlyPrivate = async (params: IUploadParams) => {
-  const { file, ipfsType } = params;
+  const { file, ipfsType, storageProvider } = params;
   const { name, mimetype, data } = file;
 
-  const ipfsFile = await uploadPrivateToPinata({
-    name,
-    mimetype,
-    data
-  });
+  const ipfsFile = await uploadPrivateFile(
+    { name, mimetype, data },
+    storageProvider
+  );
 
   return {
     ipfsUrl: ipfsFile?.ipfsUrl,
@@ -103,14 +108,14 @@ export const uploadPrivate = async (params: IUploadParams) => {
     invokerAddress,
     tags,
     ipfsType,
+    storageProvider,
   } = params;
   const { name, mimetype, data } = file;
 
-  const ipfsFile = await uploadPrivateToPinata({
-    name, 
-    mimetype, 
-    data
-  });
+  const ipfsFile = await uploadPrivateFile(
+    { name, mimetype, data },
+    storageProvider
+  );
 
   await create({
     appFileId,
