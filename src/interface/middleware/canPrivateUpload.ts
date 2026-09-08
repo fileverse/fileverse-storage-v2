@@ -1,9 +1,8 @@
 import { NextFunction, Response } from "express";
-import { config } from "../../config";
-import { checkIsWorkspace } from "../../domain/workspace";
-import { getCache, setCache } from "../../infra/cache";
+import { resolveWorkspaceStatus } from "../../domain/workspace";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
+import { throwForWorkspaceLookupError } from "../workspaceStatusErrors";
 import { checkStorageLimit } from "./canUpload";
 
 export const canPrivateUpload = async (
@@ -33,18 +32,11 @@ export const canPrivateUpload = async (
     });
   }
 
-  // Positive-only cache (key shared with resolveIsWorkspaceCached): a
-  // memorized "no" from identity-indexer lag would 403 a fresh workspace's
-  // publishes for a full TTL.
-  const cacheKey = `workspace:${contractAddress.toLowerCase()}`;
-  const cached = await getCache(cacheKey);
-  let isWorkspace = cached === "true";
-
-  if (!isWorkspace) {
-    isWorkspace = await checkIsWorkspace(contractAddress);
-    if (isWorkspace) {
-      await setCache(cacheKey, "true", Number(config.WORKSPACE_STATUS_TTL));
-    }
+  let isWorkspace: boolean;
+  try {
+    isWorkspace = await resolveWorkspaceStatus(contractAddress);
+  } catch (err) {
+    return throwForWorkspaceLookupError(err, req, res, contractAddress);
   }
 
   if (!isWorkspace) {

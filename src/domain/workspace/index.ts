@@ -1,2 +1,6 @@
 export { checkIsWorkspace } from "./checkIsWorkspace";
-export { resolveIsWorkspaceCached } from "./resolveIsWorkspaceCached";
+export { resolveWorkspaceStatus } from "./resolveWorkspaceStatus";
+export {
+  InvalidPortalAddressError,
+  WorkspaceLookupUnavailableError,
+} from "./errors";

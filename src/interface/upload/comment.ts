@@ -1,6 +1,7 @@
 import { upload } from "../../domain";
 import { uploadPrivate } from "../../domain/upload";
-import { resolveIsWorkspaceCached } from "../../domain/workspace";
+import { resolveWorkspaceStatus } from "../../domain/workspace";
+import { throwForWorkspaceLookupError } from "../workspaceStatusErrors";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest, FileIPFSType } from "../../types";
@@ -24,7 +25,6 @@ const commentSchema = Joi.object({
 // `contract` header; comments targeting a team-workspace portal go to private
 // storage, everything else stays public. The route is deliberately unauthenticated
 // in this version — the lane is decided by the TARGET portal, not the writer.
-// See docs/architecture/workspace-private-ipfs.md (ddocs.new).
 async function uploadCommentFn(req: CustomRequest, res: Response) {
   const file = isArray(req.files?.file) ? req.files?.file[0] : req.files?.file;
 
@@ -49,18 +49,15 @@ async function uploadCommentFn(req: CustomRequest, res: Response) {
 
   const contractAddress = req.headers.contract as string;
 
-  // Missing header ⇒ public (status quo for stale clients). Lookup failure ⇒ 503:
-  // picking a lane by guesswork could silently downgrade a workspace comment.
+  // Missing header ⇒ public (status quo for stale clients). Lookup failure ⇒ 503
+  // (see throwForWorkspaceLookupError): guessing a lane could silently downgrade
+  // a workspace comment.
   let isWorkspacePortal = false;
   if (contractAddress) {
     try {
-      isWorkspacePortal = await resolveIsWorkspaceCached(contractAddress);
-    } catch {
-      return throwError({
-        code: 503,
-        message: `workspace status lookup failed for contract: ${contractAddress}`,
-        req,
-      });
+      isWorkspacePortal = await resolveWorkspaceStatus(contractAddress);
+    } catch (err) {
+      return throwForWorkspaceLookupError(err, req, res, contractAddress);
     }
   }
 

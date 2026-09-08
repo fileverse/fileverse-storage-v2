@@ -1,7 +1,8 @@
 import { Response } from "express";
 import { isArray } from "util";
 import { uploadImage, uploadPrivateImage } from "../../domain/uploadImage";
-import { resolveIsWorkspaceCached } from "../../domain/workspace";
+import { resolveWorkspaceStatus } from "../../domain/workspace";
+import { throwForWorkspaceLookupError } from "../workspaceStatusErrors";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
 import { validate, Joi } from "../middleware";
@@ -35,18 +36,15 @@ async function uploadImageFn(req: CustomRequest, res: Response) {
 
   const contractAddress = req.headers.contract as string;
 
-  // Missing header ⇒ public (status quo for stale clients). Lookup failure ⇒
-  // 503: guessing a lane could silently downgrade a workspace image.
+  // Missing header ⇒ public (status quo for stale clients). Lookup failure ⇒ 503
+  // (see throwForWorkspaceLookupError): guessing a lane could silently downgrade
+  // a workspace image.
   let isWorkspacePortal = false;
   if (contractAddress) {
     try {
-      isWorkspacePortal = await resolveIsWorkspaceCached(contractAddress);
-    } catch {
-      return throwError({
-        code: 503,
-        message: `workspace status lookup failed for contract: ${contractAddress}`,
-        req,
-      });
+      isWorkspacePortal = await resolveWorkspaceStatus(contractAddress);
+    } catch (err) {
+      return throwForWorkspaceLookupError(err, req, res, contractAddress);
     }
   }
 

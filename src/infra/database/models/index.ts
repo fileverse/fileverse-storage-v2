@@ -6,6 +6,7 @@ import LegacyPortalLimit from "./legacy-portal-limit";
 import Floppy from "./floppy";
 import UserOps from "./user-ops";
 import ApiAccessKey from "./apiAccessKey";
+import Workspace from "./workspace";
 
 export {
   File,
@@ -15,4 +16,5 @@ export {
   Floppy,
   UserOps,
   ApiAccessKey,
+  Workspace,
 };
