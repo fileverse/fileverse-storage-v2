@@ -8,6 +8,7 @@ import file from "./file";
 import semaphore from "./semaphore";
 import apiAccess from "./api-access";
 import privateRouter from "./privateRoute";
+import feedback from "./feedback";
 
 const router = Router();
 
@@ -28,5 +29,7 @@ router.use("/semaphore", semaphore);
 router.use("/api-access", apiAccess);
 
 router.use("/private",privateRouter);
+
+router.use("/feedback", feedback);
 
 export default router;
