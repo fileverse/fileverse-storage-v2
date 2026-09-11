@@ -7,6 +7,7 @@ import Floppy from "./floppy";
 import UserOps from "./user-ops";
 import ApiAccessKey from "./apiAccessKey";
 import Workspace from "./workspace";
+import Feedback from "./feedback";
 
 export {
   File,
@@ -17,4 +18,5 @@ export {
   UserOps,
   ApiAccessKey,
   Workspace,
+  Feedback,
 };
