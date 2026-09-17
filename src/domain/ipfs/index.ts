@@ -2,7 +2,7 @@ export { upload, uploadPublicImage, unpin, unpinPublic, unpinPrivate, uploadPriv
 export {
   PRIVATE_STORAGE_TYPES,
   isPrivateStorageType,
-  parsePrivateStorageProvider,
+  privateStorageProvider,
   type PrivateStorageProvider,
   uploadPrivateFile,
   getPrivateFileByStorageType,
