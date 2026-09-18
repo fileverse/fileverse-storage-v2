@@ -38,8 +38,6 @@ process.on("SIGINT", function () {
     logger.info(
       "Mongoose default connection disconnected through app termination"
     );
-    throw new Error(
-      "Mongoose default connection disconnected through app termination"
-    );
+    process.exit(0);
   });
 });

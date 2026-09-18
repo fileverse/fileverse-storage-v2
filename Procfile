@@ -2,3 +2,4 @@ web: npm start
 unpin-gate-cron: npm run start:unpin-gate-cron
 unpin-deleted-file-cron: npm run start:unpin-deleted-file-cron
 resolve-user-ops: npm run start:resolve-user-op-hash-cron
+usage-refresh-cron: npm run start:usage-refresh-cron
