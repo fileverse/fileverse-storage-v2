@@ -33,6 +33,17 @@ const batchUploadFn = async (req: CustomRequest, res: Response) => {
     });
   }
 
+  const hasContent = files.some(
+    (file) => getIPFSTypeFromFileName(file.name) === FileIPFSType.CONTENT
+  );
+  if (hasContent && !(typeof appFileId === "string" && appFileId)) {
+    return throwError({
+      code: 400,
+      message: "appFileId is required for content uploads",
+      req,
+    });
+  }
+
   const requestMark = startMark();
 
   // Files pin concurrently, so the phase takes as long as the SLOWEST file:
