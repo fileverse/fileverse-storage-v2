@@ -16,5 +16,9 @@ config.LEGACY_STORAGE_BACKEND = config.LEGACY_STORAGE_BACKEND || "";
 config.WORKSPACE_STATUS_TTL = process.env.WORKSPACE_STATUS_TTL ?? "86400";
 config.IDENTITY_INDEXER_TIMEOUT_MS =
   process.env.IDENTITY_INDEXER_TIMEOUT_MS ?? "2000";
+config.STORAGE_VERSION_CUTOFF = config.STORAGE_VERSION_CUTOFF || "5";
+if (!/^[1-9]\d*$/.test(config.STORAGE_VERSION_CUTOFF)) {
+  throw new Error("STORAGE_VERSION_CUTOFF must be a positive integer");
+}
 
 export { config };

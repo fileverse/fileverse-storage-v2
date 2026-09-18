@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { isArray } from "util";
 import { uploadPrivate } from "../../domain/upload";
-import { CustomRequest } from "../../types";
+import { CustomRequest, FileIPFSType } from "../../types";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
 
@@ -28,6 +28,16 @@ const privateUploadFn = async (req: CustomRequest, res: Response) => {
     return throwError({
       code: 400,
       message: "Invalid request",
+      req,
+    });
+  }
+  if (
+    ipfsType === FileIPFSType.CONTENT &&
+    !(typeof appFileId === "string" && appFileId)
+  ) {
+    return throwError({
+      code: 400,
+      message: "appFileId is required for content uploads",
       req,
     });
   }
