@@ -1,4 +1,5 @@
 import { getStorageUse } from "../../domain/limit/getStorageUse";
+import { flagPortalForRebuild } from "../../domain/limit/docUsage";
 import { NextFunction } from "express";
 import { CustomRequest } from "../../types";
 import { Response } from "express";
@@ -12,6 +13,9 @@ export const checkStorageLimit = async (
     return false;
   }
 
+  // API-only portals never call /use; their first upload attempt queues the
+  // rebuild. This request still sees the old number, the next one the new.
+  if (contractAddress) await flagPortalForRebuild(contractAddress);
   const limit = await getStorageUse({ contractAddress });
   const totalAllowedStorage =
     Number(limit.storageLimit) + Number(limit.extraStorage);

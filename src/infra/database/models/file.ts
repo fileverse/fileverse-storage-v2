@@ -55,6 +55,15 @@ fileSchema.pre("save", function (next) {
   next();
 });
 
+fileSchema.index({
+  contractAddress: 1,
+  appFileId: 1,
+  ipfsType: 1,
+  isDeleted: 1,
+  timeStamp: -1,
+  _id: -1,
+});
+
 const File = model("files", fileSchema);
 
 export default File;

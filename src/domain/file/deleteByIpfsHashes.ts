@@ -1,5 +1,6 @@
-import { File, Limit } from "../../infra/database/models";
+import { File } from "../../infra/database/models";
 import { FileIPFSType } from "../../types";
+import { markUsageDirtyQuietly } from "../limit/docUsage";
 
 interface IDeleteByIpfsHashesParams {
   contractAddress: string;
@@ -10,33 +11,35 @@ export const deleteByIpfsHashes = async ({
   contractAddress,
   ipfsHashes,
 }: IDeleteByIpfsHashesParams) => {
+  const portal = contractAddress.toLowerCase();
+  // Already-deleted rows are matched too so a retry still marks the
+  // document for a recompute.
   const matchedFiles = await File.find({
     ipfsHash: { $in: ipfsHashes },
-    contractAddress: contractAddress.toLowerCase(),
-    isDeleted: false,
-  });
+    contractAddress: portal,
+  }).select("isDeleted ipfsType appFileId");
 
   if (matchedFiles.length === 0) {
     return { deletedCount: 0, bytesFreed: 0 };
   }
 
-  const contentFiles = matchedFiles.filter(
-    (f) => f.ipfsType === FileIPFSType.CONTENT
-  );
-  const totalSize = contentFiles.reduce((acc, f) => acc + (f.fileSize || 0), 0);
-
-  const fileIds = matchedFiles.map((f) => f._id);
-  await File.updateMany(
-    { _id: { $in: fileIds } },
-    { $set: { isDeleted: true, markedForUnpin: true } }
-  );
-
-  if (totalSize > 0) {
-    await Limit.updateOne(
-      { contractAddress: contractAddress.toLowerCase() },
-      { $inc: { storageUse: -totalSize } }
+  const liveIds = matchedFiles.filter((f) => !f.isDeleted).map((f) => f._id);
+  if (liveIds.length > 0) {
+    await File.updateMany(
+      { _id: { $in: liveIds } },
+      { $set: { isDeleted: true, markedForUnpin: true } }
     );
   }
 
-  return { deletedCount: matchedFiles.length, bytesFreed: totalSize };
+  const appFileIds = matchedFiles
+    .filter((f) => f.ipfsType === FileIPFSType.CONTENT && f.appFileId)
+    .map((f) => String(f.appFileId));
+  if (appFileIds.length > 0) {
+    await markUsageDirtyQuietly(
+      { contractAddress: portal, appFileIds },
+      { ipfsHashes }
+    );
+  }
+
+  return { deletedCount: liveIds.length, bytesFreed: 0 };
 };

@@ -1,6 +1,7 @@
 import { config } from "../../config";
-import { File, Limit } from "../../infra/database/models";
+import { File } from "../../infra/database/models";
 import { FileIPFSType, IFile } from "../../types";
+import { markUsageDirtyQuietly } from "../limit/docUsage";
 // omit isDeleted, isPinned, timeStamp
 interface ICreateFileParams
   extends Omit<IFile, "isDeleted" | "isPinned" | "timeStamp" | "networkName"> {}
@@ -58,15 +59,10 @@ export const create = async (params: ICreateFileParams) => {
     }
   }
 
-  // People are hitting ceiling too fast
-  if (newFile.ipfsType === FileIPFSType.CONTENT) {
-    await Limit.updateOne(
-      { contractAddress },
-      {
-        $inc: { storageUse: newFile.fileSize },
-        $setOnInsert: { contractAddress },
-      },
-      { upsert: true }
+  if (newFile.ipfsType === FileIPFSType.CONTENT && newFile.appFileId) {
+    await markUsageDirtyQuietly(
+      { contractAddress, appFileIds: [newFile.appFileId] },
+      { ipfsHash: newFile.ipfsHash }
     );
   }
   return newFile.toObject();
