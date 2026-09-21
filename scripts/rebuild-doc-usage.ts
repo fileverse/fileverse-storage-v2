@@ -15,6 +15,8 @@ import { FileIPFSType } from "../src/types";
 // Rebuilds doc-usages and limits.storageUse from the files collection. Dry-run
 // by default: prints what would change and writes nothing. Safe to re-run.
 // --dirty restricts the run to portals flagged usageDirty and clears the flag.
+// The worker rebuilds each portal on its first /use or upload after deploy, so
+// a full --apply is a backstop for portals never touched, not a prerequisite.
 
 const args = process.argv.slice(2);
 const apply = args.includes("--apply");
@@ -61,6 +63,7 @@ async function preChecks(): Promise<{ uniqueIndexPresent: boolean }> {
     noIpfsType,
     waitingRows,
     dirtyPortals,
+    neverRebuilt,
     docUsageIndexes,
     fileIndexes,
     duplicateLimits,
@@ -84,6 +87,7 @@ async function preChecks(): Promise<{ uniqueIndexPresent: boolean }> {
     File.countDocuments({ isDeleted: false, ipfsType: null, ...portalFilter }),
     DocUsage.countDocuments({ attempts: { $gt: 0 }, ...portalFilter }),
     Limit.countDocuments({ usageDirty: true, ...portalFilter }),
+    Limit.countDocuments({ usageRebuiltAt: null, ...portalFilter }),
     indexNames("doc-usages"),
     indexNames("files"),
     Limit.aggregate([
@@ -110,6 +114,7 @@ async function preChecks(): Promise<{ uniqueIndexPresent: boolean }> {
   console.log(`  rows with no ipfsType:                  ${noIpfsType}`);
   console.log(`  doc-usage rows with failed attempts:    ${waitingRows}`);
   console.log(`  portals flagged usageDirty:             ${dirtyPortals}`);
+  console.log(`  limits rows never rebuilt (no marker):  ${neverRebuilt}`);
   console.log(
     `  limits rows sharing a contractAddress:  ` +
       `${duplicateLimits[0]?.portals ?? 0} portals`
@@ -165,6 +170,14 @@ async function main() {
   await Promise.all([DocUsage.init(), File.init(), Limit.init()]);
   const mode = apply ? "apply" : "dry-run (pass --apply to write)";
   console.log(`MODE: ${mode}${onlyDirty ? ", dirty portals only" : ""}`);
+  if (!apply) {
+    console.log(
+      "NOTE: --apply stamps limits.usageRebuiltAt, which tells the worker a " +
+        "portal is already rebuilt. Only apply against a deployment that " +
+        "runs the rebuild-on-first-touch worker; applying before that " +
+        "deploy makes those portals skip their first-touch rebuild."
+    );
+  }
 
   if (onlyPortal) {
     const hasContent = await File.exists(liveContent);
@@ -220,9 +233,9 @@ async function main() {
       `[${i + 1}/${portals.length}] ${portal} ${label}` +
         `${toGB(r.before)} -> ${toGB(r.after)} docs=${r.docs}${skipped}`
     );
-    if (apply && onlyDirty) {
-      await Limit.updateOne(
-        { contractAddress: portal },
+    if (apply) {
+      await Limit.updateMany(
+        { contractAddress: portal, usageDirty: true },
         { $set: { usageDirty: false } }
       );
     }

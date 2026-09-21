@@ -13,8 +13,8 @@ let failedTicks = 0;
 async function jobDefinition(job: Job, done: (args?: unknown) => void) {
   try {
     const result = await processDirtyRows({ limit: BATCH_SIZE });
-    const { processed, skipped, failed, portals } = result;
-    if (processed || skipped || failed || portals) {
+    const { processed, skipped, failed, portals, deferred, cooling } = result;
+    if (processed || skipped || failed || portals || deferred || cooling) {
       logger.info({ job: JOB_NAME, ...result }, "doc usage refresh tick");
     }
     failedTicks = 0;
@@ -36,8 +36,14 @@ async function jobDefinition(job: Job, done: (args?: unknown) => void) {
 
 async function setupJob() {
   // Portal sums are only correct with a single runner; pin it here rather
-  // than relying on the shared agenda defaults.
-  agenda.define(JOB_NAME, { concurrency: 1, lockLimit: 1 }, jobDefinition);
+  // than relying on the shared agenda defaults. A tick spends up to a minute
+  // starting rebuilds and the last one may run long; the lock must outlast
+  // the longest tick or agenda starts a second run in the same process.
+  agenda.define(
+    JOB_NAME,
+    { concurrency: 1, lockLimit: 1, lockLifetime: 30 * 60 * 1000 },
+    jobDefinition
+  );
   agenda.every("5 seconds", JOB_NAME);
 }
 

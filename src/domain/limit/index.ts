@@ -10,12 +10,14 @@ export {
   computeDocCharge,
   markUsageDirty,
   markUsageDirtyQuietly,
-  processDirtyRows,
+  flagPortalForRebuild,
   computeStorageUse,
   sumDocCharges,
   readStorageUse,
 } from "./docUsage";
-export type { DocCharge, RefreshResult } from "./docUsage";
+export type { DocCharge } from "./docUsage";
+export { processDirtyRows } from "./refreshDocUsage";
+export type { RefreshResult } from "./refreshDocUsage";
 export {
   computePortalDocUsages,
   rebuildPortalUsage,

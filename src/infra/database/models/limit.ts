@@ -39,6 +39,14 @@ const limitSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  usageDirtyAt: {
+    type: Number,
+    default: null,
+  },
+  usageRebuiltAt: {
+    type: Number,
+    default: null,
+  },
   unit: { type: String, default: "bytes" },
   claimsMap: { type: Schema.Types.Mixed },
   redeemMap: { type: Schema.Types.Mixed },
@@ -49,6 +57,11 @@ const limitSchema = new Schema({
     default: Date.now,
   },
 });
+
+limitSchema.index(
+  { usageDirty: 1, usageDirtyAt: 1 },
+  { partialFilterExpression: { usageDirty: true } }
+);
 
 limitSchema.pre("save", function (next) {
   this.timeStamp = Date.now();

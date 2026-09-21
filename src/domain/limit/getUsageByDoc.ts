@@ -37,6 +37,7 @@ export interface PortalUsageByDoc {
   rowSum: number;
   liveSum: number | null;
   usageDirty: boolean;
+  usageRebuiltAt: number | null;
   dirtyRows: number;
   unsummedRows: number;
   truncated: boolean;
@@ -53,6 +54,7 @@ export const legacyPortalUsage = (
   rowSum: 0,
   liveSum: null,
   usageDirty: false,
+  usageRebuiltAt: null,
   dirtyRows: 0,
   unsummedRows: 0,
   truncated: false,
@@ -73,7 +75,7 @@ export const getUsageByDoc = async ({
   const [limit, rows, rowSum, dirtyRows, unsummedRows, cutoff] =
     await Promise.all([
       Limit.findOne({ contractAddress: portal }).select(
-        "storageUse usageDirty"
+        "storageUse usageDirty usageRebuiltAt"
       ),
       DocUsage.find({ contractAddress: portal })
         .sort({ charge: -1 })
@@ -132,6 +134,9 @@ export const getUsageByDoc = async ({
       ? liveDocs.reduce((sum, doc) => sum + doc.charge, 0)
       : null,
     usageDirty: Boolean(limit?.usageDirty),
+    usageRebuiltAt: limit?.usageRebuiltAt
+      ? Number(limit.usageRebuiltAt)
+      : null,
     dirtyRows,
     unsummedRows,
     truncated: rows.length === MAX_DOCS || merged.length > MAX_DOCS,

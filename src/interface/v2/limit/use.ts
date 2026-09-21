@@ -1,4 +1,8 @@
-import { getStorageUse, getLegacyStorageUse } from "../../../domain/limit";
+import {
+  getStorageUse,
+  getLegacyStorageUse,
+  flagPortalForRebuild,
+} from "../../../domain/limit";
 import { validate, Joi } from "../../middleware";
 import { CustomRequest } from "../../../types";
 import { Response } from "express";
@@ -49,6 +53,7 @@ async function use(req: CustomRequest, res: Response) {
         data.storageUse += Number(legacyStorage.storageUse);
       }
     } else {
+      await flagPortalForRebuild(contractAddress);
       const appStorage = await getStorageUse({
         contractAddress,
         shouldIncludeLegacy: false,

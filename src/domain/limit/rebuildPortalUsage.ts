@@ -1,4 +1,4 @@
-import { DocUsage, File } from "../../infra/database/models";
+import { DocUsage, File, Limit } from "../../infra/database/models";
 import { FileIPFSType } from "../../types";
 import {
   computeStorageUse,
@@ -166,6 +166,13 @@ export const rebuildPortalUsage = async ({
       updatedAt: { $lte: sumStartedAt },
     },
     { $set: { summed: true } }
+  );
+  // The row computeStorageUse just upserted; the marker tells the worker
+  // this portal's rows are complete and may be re-summed from now on. Every
+  // row is stamped in case the portal has duplicate limits rows.
+  await Limit.updateMany(
+    { contractAddress: portal },
+    { $set: { usageRebuiltAt: Date.now() } }
   );
   return { docs: docs.length, skipped, before, after };
 };
