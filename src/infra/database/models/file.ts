@@ -55,6 +55,10 @@ fileSchema.pre("save", function (next) {
   next();
 });
 
+// Indexes on this collection are created by hand; a build started by every
+// booting dyno is too heavy for its size.
+fileSchema.set("autoIndex", false);
+
 fileSchema.index({
   contractAddress: 1,
   appFileId: 1,

@@ -166,8 +166,9 @@ async function main() {
   // Model calls buffer until the connection opens; the raw index listing
   // does not, so wait for it here. init() creates the collections and
   // builds the declared indexes, which the running server may not have yet.
+  // The files index is created by hand and only reported below.
   await mongoose.connection.asPromise();
-  await Promise.all([DocUsage.init(), File.init(), Limit.init()]);
+  await Promise.all([DocUsage.init(), Limit.init()]);
   const mode = apply ? "apply" : "dry-run (pass --apply to write)";
   console.log(`MODE: ${mode}${onlyDirty ? ", dirty portals only" : ""}`);
   if (!apply) {

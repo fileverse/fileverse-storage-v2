@@ -26,7 +26,6 @@ export type { PortalDocUsage } from "./rebuildPortalUsage";
 export { getUsageByDoc, legacyPortalUsage } from "./getUsageByDoc";
 export type {
   DocUsageEntry,
-  LiveDocUsage,
   PortalUsageByDoc,
   StoredDocUsage,
 } from "./getUsageByDoc";

@@ -12,9 +12,6 @@ const usageByDocValidation = {
     invoker: Joi.string().required(),
     chain: Joi.string().required(),
   }).unknown(true),
-  query: Joi.object({
-    live: Joi.string().valid("1").optional(),
-  }).unknown(true),
 };
 
 // Only the portal the token verified for is served: the auth layer accepts a
@@ -25,11 +22,10 @@ async function usageByDoc(req: CustomRequest, res: Response) {
   if (!contractAddress) {
     return throwError({ code: 400, message: "Invalid request", req });
   }
-  const live = req.query.live === "1";
   const isLegacy = await isLegacyContract(contractAddress as Hex);
   const portal = isLegacy
     ? legacyPortalUsage(contractAddress)
-    : await getUsageByDoc({ contractAddress, live });
+    : await getUsageByDoc({ contractAddress });
   res.json({ portals: [portal] });
 }
 

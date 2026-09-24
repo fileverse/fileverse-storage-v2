@@ -49,7 +49,9 @@ is true, and `{summed, contractAddress}` where `summed` is false.
 
 `files` has a compound index
 `{contractAddress, appFileId, ipfsType, isDeleted, timeStamp: -1, _id: -1}` so
-the per-document query is a bounded index walk.
+the per-document query is a bounded index walk. Automatic index builds are off
+for `files`: the index is declared in the schema but created by hand, because
+a build started by every booting process is too heavy for that collection.
 
 ## Request path: mark, never compute
 
@@ -139,12 +141,13 @@ deploy, and summing those would collapse its total to a fraction of the truth.
 npx ts-node scripts/rebuild-doc-usage.ts [--apply] [--portal <addr>] [--dirty]
 ```
 
-Dry-run by default. It waits for the connection, builds the declared indexes,
-prints read-only pre-checks (rows with missing or non-numeric `fileSize`, live
-content rows without `appFileId` and the newest such row, rows without
-`ipfsType`, duplicate `limits` rows, rows waiting with failed attempts, flagged
-portals, portals never rebuilt, index presence), then lists the portals with
-live content (or the one given, or the flagged ones) and rebuilds each one on
+Dry-run by default. It waits for the connection, builds the declared
+`doc-usages` and `limits` indexes (the `files` index is only reported), prints
+read-only pre-checks (rows with missing or non-numeric `fileSize`, live content
+rows without `appFileId` and the newest such row, rows without `ipfsType`,
+duplicate `limits` rows, rows waiting with failed attempts, flagged portals,
+portals never rebuilt, index presence), then lists the portals with live
+content (or the one given, or the flagged ones) and rebuilds each one on
 `--apply`. A full apply also zeroes `storageUse` on `limits` rows with no live
 content and sweeps stale rows. It refuses to apply without the unique index.
 
@@ -154,6 +157,10 @@ its first-touch rebuild.
 
 ## Rollout and operations
 
+- Before deploy, create the `files` index by hand and wait for the build to
+  finish:
+  `db.files.createIndex({ contractAddress: 1, appFileId: 1, ipfsType: 1, isDeleted: 1, timeStamp: -1, _id: -1 })`.
+  The dry-run's "files compound index present" line confirms it.
 - Deploy, then scale `usage-refresh-cron` to one dyno at once. Until it runs,
   every counter is frozen: flags and dirty rows queue and drain later, oldest
   first.
@@ -171,11 +178,11 @@ its first-touch rebuild.
 
 ## Debug endpoint
 
-`GET /limit/usage-by-doc[?live=1]`, same auth as `/limit/use`, serves only the
-portal the token verified for. Returns the portal's stored rows, optionally a
-live recompute from `files` next to each, the three totals (`storageUse`, sum
-of rows, sum of live), `usageDirty`, `usageRebuiltAt`, and dirty and unsummed
-counts. The ddocs.new page `/dev/storage` renders it per portal.
+`GET /limit/usage-by-doc`, same auth as `/limit/use`, serves only the portal
+the token verified for. Returns the portal's stored rows (largest charge
+first, at most 500), the two totals (`storageUse` and the sum of rows),
+`usageDirty`, `usageRebuiltAt`, and dirty and unsummed counts. It reads only
+`doc-usages` and `limits`, never `files`. The ddocs.new page `/dev/storage` renders it per portal.
 
 ## Configuration
 
