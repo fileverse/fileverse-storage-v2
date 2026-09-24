@@ -79,3 +79,9 @@ dev-journal.md
 scripts/encode-contract-meta.sh
 scripts/gen-contract-meta.sh
 scripts/contract-meta.json
+
+/graphify-out/
+# Local document-recovery backups (scripts/backup-ipfs-hashes.mjs output)
+/recovery/
+
+.superpowers/
