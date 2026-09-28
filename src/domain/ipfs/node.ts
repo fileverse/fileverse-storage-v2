@@ -111,7 +111,13 @@ export const getPrivateFileFromNode = async (
     throw new Error(`ipfs node sign ${cid} returned no link`);
   }
 
-  const res = await fetch(link);
+  // The signed link authenticates the read, but the node's rate limiter only
+  // recognises header credentials; without one every fetch from this dyno
+  // shares the anonymous per-IP budget. X-API-Key, not Authorization: the
+  // read gateway would take an Authorization header as its token.
+  const res = await fetch(link, {
+    headers: { "X-API-Key": config.IPFS_NODE_BEARER as string },
+  });
   if (res.status === 404) {
     return notFound;
   }
