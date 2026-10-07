@@ -13,6 +13,7 @@ const uploadValidation = {
     origin: Joi.string().optional(),
     invoker: Joi.string().optional(),
     contract: Joi.string().optional(),
+    lane: Joi.string().valid("private", "public").optional(),
   }).unknown(true),
 };
 
@@ -38,7 +39,8 @@ async function uploadImageFn(req: CustomRequest, res: Response) {
 
   // Missing header ⇒ public (status quo for stale clients). Lookup failure ⇒ 503
   // (see throwForWorkspaceLookupError): guessing a lane could silently downgrade
-  // a workspace image.
+  // a workspace image. Without a contract, a `lane` header picks it: opaque-link
+  // editors must not learn the portal, and the apps coordinator tells them the lane.
   let isWorkspacePortal = false;
   if (contractAddress) {
     try {
@@ -46,6 +48,8 @@ async function uploadImageFn(req: CustomRequest, res: Response) {
     } catch (err) {
       return throwForWorkspaceLookupError(err, req, res, contractAddress);
     }
+  } else {
+    isWorkspacePortal = req.headers.lane === "private";
   }
 
   const uploadFn = isWorkspacePortal ? uploadPrivateImage : uploadImage;
