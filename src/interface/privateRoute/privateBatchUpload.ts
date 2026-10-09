@@ -7,7 +7,11 @@ import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
 import { logger } from "../../infra/logger";
 import { startMark, elapsedMs } from "../../infra/timing";
-import { BatchUploadResponse, getIPFSTypeFromFileName } from "../upload/common";
+import {
+  BatchUploadResponse,
+  getBatchFiles,
+  getIPFSTypeFromFileName,
+} from "../upload/common";
 import { warmPrivateGatewayCache } from "./gatewayCache";
 
 const batchUploadValidation = {
@@ -22,7 +26,7 @@ const SLOW_UPLOAD_MS = 10_000;
 
 const batchUploadFn = async (req: CustomRequest, res: Response) => {
   const { contractAddress, invokerAddress } = req;
-  const files = Array.isArray(req.files?.files) ? req.files?.files : [];
+  const files = getBatchFiles(req);
   const { appFileId, sourceApp } = req.body;
 
   if (!contractAddress || !invokerAddress || !files || files?.length === 0) {
