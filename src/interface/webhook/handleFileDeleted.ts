@@ -3,7 +3,7 @@ import { deleteByIpfsHashes } from "../../domain/file";
 import { throwError } from "../../infra/errorHandler";
 
 export async function handleFileDeleted(req: Request, res: Response) {
-  const { contractAddress, ipfsHashes } = req.body;
+  const { contractAddress, ipfsHashes, appFileId } = req.body;
 
   if (!contractAddress) {
     return throwError({ code: 400, message: "contractAddress is required", req });
@@ -17,7 +17,11 @@ export async function handleFileDeleted(req: Request, res: Response) {
     });
   }
 
-  const result = await deleteByIpfsHashes({ contractAddress, ipfsHashes });
+  if (appFileId !== undefined && !(typeof appFileId === "string" && appFileId)) {
+    return throwError({ code: 400, message: "appFileId must be a non-empty string", req });
+  }
+
+  const result = await deleteByIpfsHashes({ contractAddress, ipfsHashes, appFileId });
 
   res.json(result);
 }

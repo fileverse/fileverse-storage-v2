@@ -1,17 +1,23 @@
 import { File } from "../../infra/database/models";
 import { FileIPFSType } from "../../types";
 import { markUsageDirtyQuietly } from "../limit/docUsage";
+import { deleteCommunityFiles } from "../communityFiles/delete";
 
 interface IDeleteByIpfsHashesParams {
   contractAddress: string;
   ipfsHashes: string[];
+  appFileId?: string;
 }
 
 export const deleteByIpfsHashes = async ({
   contractAddress,
   ipfsHashes,
+  appFileId,
 }: IDeleteByIpfsHashesParams) => {
   const portal = contractAddress.toLowerCase();
+  if (appFileId) {
+    await deleteCommunityFiles({ dsheetIds: [appFileId], portalAddress: portal });
+  }
   // Already-deleted rows are matched too so a retry still marks the
   // document for a recompute.
   const matchedFiles = await File.find({
