@@ -1,6 +1,5 @@
 import { File } from "../../infra/database/models";
-import { getCommunityFile } from "../communityFiles";
-import { deleteCommunityFile } from "../communityFiles/delete";
+import { deleteCommunityFiles } from "../communityFiles/delete";
 import { markUsageDirtyQuietly } from "../limit/docUsage";
 
 interface IDeleteAllCriteria {
@@ -9,17 +8,10 @@ interface IDeleteAllCriteria {
 }
 
 export const deleteAll = async (criteria: IDeleteAllCriteria) => {
-  const existingCommunityFile = await getCommunityFile({
-    dsheetId: criteria.appFileId,
-    contractAddress: criteria.contractAddress,
+  await deleteCommunityFiles({
+    dsheetIds: [criteria.appFileId],
+    portalAddress: criteria.contractAddress,
   });
-
-  if (existingCommunityFile) {
-    await deleteCommunityFile({
-      appFileId: criteria.appFileId,
-      contractAddress: criteria.contractAddress,
-    });
-  }
 
   const result = await File.updateMany(
     { ...criteria, isDeleted: false },
