@@ -5,6 +5,7 @@ import { FLOPPY_CONTRACT_ABI } from "../src/data/floppyContractAbi";
 import { encodeFunctionData, Hex, parseEventLogs } from "viem";
 import { publicClient } from "../src/domain/contract/viemClient";
 import { Floppy } from "../src/infra/database/models";
+import { FLOPPY_WRITE_CALL_GAS_LIMIT } from "../src/domain/floppy/floppyManager";
 
 const { FLOPPY_CONTRACT_ADDRESS, MANAGER_CONTRACT_ADDRESS } = config as {
   FLOPPY_CONTRACT_ADDRESS: Hex;
@@ -22,14 +23,14 @@ interface IFloppy {
 }
 
 const FLOPPY = {
-  shortCode: "DAPPCON26",
+  shortCode: "DEVCON8",
   diskSpace: 10000000000, // 10 GB
   metadataURI:
-    "ipfs://QmVWo7emSDTzEuHtP3hg7m9Ry2GBwamGgfj4BLPRuJzmJL",
-  maxCount: 2000,
-  name: `DappCon 2026`,
-  description: 'Forked from the future, handed to you in Berlin! This floppy disk is a small Fileverse collectable with 10 GB of e2e encrypted storage on ddocs for you to try a new kind of private collaboration, built on Ethereum/Gnosis :yellow_heart:',
-  img: "https://s3.eu-west-2.amazonaws.com/assets.fileverse.io/dapp/public/dappcon-floppy.png",
+    "ipfs://Qmcir4jeXLW6bfYxQSc2qVrZ1g4GUB76yJd2R3savaw2iJ",
+  maxCount: 1000,
+  name: `Devcon VIII Volunteer`,
+  description: `If you read this message, you're the lucky owner of a private Devcon Volunteer Floppy! This one-of-a-kind collectable was made by team Devcon and Fileverse for all the Volunteers that made Devcon VIII India a reality. Tucked inside are 10 GB of private storage and a secret that’s yours alone, revealed in early 2027 💜\n\n👩‍🏭 Don't hesitate to chat with the Fileverse team via the feedback button if there's anything you'd like to learn about us or a key feature you'd like to add.`,
+  img: "https://apps-ipfs.fileverse.io/ipfs/QmYpYkU4Ex4ynx2WXUqE1Y9AauPZsgUc2iSraHNKAQZpgn",
   offchain: false,
   supportsMultipleClaims: false,
 };
@@ -52,7 +53,8 @@ const addFloppy = async () => {
       contractAddress: FLOPPY_CONTRACT_ADDRESS,
       data: encodedCallData,
     },
-    1000000
+    1000000,
+    FLOPPY_WRITE_CALL_GAS_LIMIT
   );
 
   const parsedLog = parseEventLogs({

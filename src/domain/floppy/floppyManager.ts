@@ -14,6 +14,11 @@ import { SIMPLE_MANAGER_ABI } from "../../data/simpleManagerAbi";
 import { getGroupMembers } from "./semaphoreSubgraph";
 import UserOps from "../../infra/database/models/user-ops";
 
+// EIP-8037 state gas puts floppy writes on Sepolia past the default 500k call
+// limit (addFloppy ~1.5M, grantFloppyAccess ~535k).
+export const FLOPPY_WRITE_CALL_GAS_LIMIT =
+  config.NETWORK === "sepolia" ? 2000000 : undefined;
+
 export class FloppyManager {
   shortCode: string;
 
@@ -122,10 +127,13 @@ export class FloppyManager {
         ],
       });
 
-      const userOpHash = await AgentInstance.sendUserOperation({
-        contractAddress: config.FLOPPY_CONTRACT_ADDRESS as `0x${string}`,
-        data: encodedCallData,
-      });
+      const userOpHash = await AgentInstance.sendUserOperation(
+        {
+          contractAddress: config.FLOPPY_CONTRACT_ADDRESS as `0x${string}`,
+          data: encodedCallData,
+        },
+        FLOPPY_WRITE_CALL_GAS_LIMIT
+      );
 
       if (!userOpHash) {
         return throwError({
@@ -194,7 +202,8 @@ export class FloppyManager {
           contractAddress: config.MANAGER_CONTRACT_ADDRESS as `0x${string}`,
           data: encodedCallData,
         },
-        1000000
+        1000000,
+        FLOPPY_WRITE_CALL_GAS_LIMIT
       );
       if (!userOp.success) {
         return throwError({
