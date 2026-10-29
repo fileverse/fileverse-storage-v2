@@ -20,5 +20,9 @@ config.STORAGE_VERSION_CUTOFF = config.STORAGE_VERSION_CUTOFF || "5";
 if (!/^[1-9]\d*$/.test(config.STORAGE_VERSION_CUTOFF)) {
   throw new Error("STORAGE_VERSION_CUTOFF must be a positive integer");
 }
+config.PRO_STORAGE_LIMIT = config.PRO_STORAGE_LIMIT || "100000000000";
+if (!/^[1-9]\d*$/.test(config.PRO_STORAGE_LIMIT)) {
+  throw new Error("PRO_STORAGE_LIMIT must be a positive integer");
+}
 
 export { config };

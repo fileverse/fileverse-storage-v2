@@ -138,3 +138,10 @@ export type DBFloppyDocument = Document<unknown, any, DBFloppy> &
     },
     never
   >;
+
+export interface PortalStorageView {
+  contractAddress: string;
+  storageLimit: number;
+  storageUse: number;
+  pro: boolean;
+}

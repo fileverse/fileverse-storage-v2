@@ -6,6 +6,7 @@ import helmet from "helmet";
 import router from "./interface";
 import v2Router from "./interface/v2";
 import webhookRouter from "./interface/webhook";
+import internalRouter from "./interface/internal";
 import { expressErrorHandler } from "./interface/middleware";
 import { asyncHandler } from "./infra/asyncHandler";
 import { verify } from "./infra/ucan";
@@ -35,6 +36,8 @@ app.use(
 
 // This /webhook route has a separate auth check
 app.use("/webhook", webhookRouter);
+// Service-to-service; authenticated by x-internal-api-key, not UCAN.
+app.use("/internal", internalRouter);
 app.use("/ping", function (req, res) {
   res.json({ reply: "pong" });
   res.end();
