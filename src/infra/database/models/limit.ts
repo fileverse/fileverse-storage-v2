@@ -31,6 +31,10 @@ const limitSchema = new Schema({
     type: Schema.Types.Decimal128,
     default: 1000000000, // 1GB
   },
+  pro: {
+    type: Boolean,
+    default: false,
+  },
   versionCutoff: {
     type: Number,
     default: null,
