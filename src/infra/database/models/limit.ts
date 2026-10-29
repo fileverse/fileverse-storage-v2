@@ -35,6 +35,10 @@ const limitSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  locked: {
+    type: Boolean,
+    default: false,
+  },
   versionCutoff: {
     type: Number,
     default: null,

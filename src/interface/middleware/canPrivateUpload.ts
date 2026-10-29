@@ -3,7 +3,7 @@ import { resolveWorkspaceStatus } from "../../domain/workspace";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
 import { throwForWorkspaceLookupError } from "../workspaceStatusErrors";
-import { checkStorageLimit } from "./canUpload";
+import { checkUploadBlock, PORTAL_LOCKED_MESSAGE } from "./canUpload";
 
 export const canPrivateUpload = async (
   req: CustomRequest,
@@ -47,12 +47,19 @@ export const canPrivateUpload = async (
     });
   }
 
-  const storageLimitBreached = await checkStorageLimit(
+  const block = await checkUploadBlock(
     contractAddress,
     invokerAddress as string
   );
 
-  if (storageLimitBreached) {
+  if (block === "locked") {
+    res
+      .status(403)
+      .json({ code: "PORTAL_LOCKED", message: PORTAL_LOCKED_MESSAGE });
+    return;
+  }
+
+  if (block === "full") {
     return throwError({
       code: 400,
       message: `Storage for ${contractAddress} is full, please either claim more storage or contact us on twitter @fileverse`,

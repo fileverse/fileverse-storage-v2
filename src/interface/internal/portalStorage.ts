@@ -23,6 +23,7 @@ async function getPortalStorage(req: Request, res: Response) {
     storageLimit: Number(usage.storageLimit) + Number(usage.extraStorage),
     storageUse: Number(usage.storageUse),
     pro: usage.pro,
+    locked: usage.locked,
   };
   res.json(view);
 }

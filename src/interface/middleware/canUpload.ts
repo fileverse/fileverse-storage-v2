@@ -1,16 +1,20 @@
 import { getStorageUse } from "../../domain/limit/getStorageUse";
 import { flagPortalForRebuild } from "../../domain/limit/docUsage";
+import { uploadBlock, type UploadBlock } from "../../domain/limit/uploadBlock";
 import { NextFunction } from "express";
 import { CustomRequest } from "../../types";
 import { Response } from "express";
 import { throwError } from "../../infra/errorHandler";
 
-export const checkStorageLimit = async (
+export const PORTAL_LOCKED_MESSAGE =
+  "This workspace is locked. Contact Fileverse.";
+
+export const checkUploadBlock = async (
   contractAddress: string,
   invokerAddress: string
-) => {
+): Promise<UploadBlock | null> => {
   if (!contractAddress && !invokerAddress) {
-    return false;
+    return null;
   }
 
   // API-only portals never call /use; their first upload attempt queues the
@@ -20,7 +24,10 @@ export const checkStorageLimit = async (
   const totalAllowedStorage =
     Number(limit.storageLimit) + Number(limit.extraStorage);
 
-  return Number(limit.storageUse) >= totalAllowedStorage;
+  return uploadBlock({
+    locked: limit.locked,
+    storageFull: Number(limit.storageUse) >= totalAllowedStorage,
+  });
 };
 
 export const canUpload = async (
@@ -41,11 +48,17 @@ export const canUpload = async (
     });
   }
 
-  const storageLimitBreached = await checkStorageLimit(
+  const block = await checkUploadBlock(
     contractAddress as string,
     invokerAddress as string
   );
-  if (storageLimitBreached) {
+  if (block === "locked") {
+    res
+      .status(403)
+      .json({ code: "PORTAL_LOCKED", message: PORTAL_LOCKED_MESSAGE });
+    return;
+  }
+  if (block === "full") {
     const statusCode = 400;
     const message = `Storage for ${contractAddress} is full, please either claim more storage or contact us on twitter @fileverse`;
 

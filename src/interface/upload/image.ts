@@ -2,6 +2,8 @@ import { Response } from "express";
 import { isArray } from "util";
 import { uploadImage, uploadPrivateImage } from "../../domain/uploadImage";
 import { resolveWorkspaceStatus } from "../../domain/workspace";
+import { isPortalLocked } from "../../domain/limit/portalLocked";
+import { PORTAL_LOCKED_MESSAGE } from "../middleware/canUpload";
 import { throwForWorkspaceLookupError } from "../workspaceStatusErrors";
 import { throwError } from "../../infra/errorHandler";
 import { CustomRequest } from "../../types";
@@ -50,6 +52,17 @@ async function uploadImageFn(req: CustomRequest, res: Response) {
     }
   } else {
     isWorkspacePortal = req.headers.lane === "private";
+  }
+
+  if (
+    isWorkspacePortal &&
+    contractAddress &&
+    (await isPortalLocked(contractAddress))
+  ) {
+    res
+      .status(403)
+      .json({ code: "PORTAL_LOCKED", message: PORTAL_LOCKED_MESSAGE });
+    return;
   }
 
   const uploadFn = isWorkspacePortal ? uploadPrivateImage : uploadImage;

@@ -144,4 +144,5 @@ export interface PortalStorageView {
   storageLimit: number;
   storageUse: number;
   pro: boolean;
+  locked: boolean;
 }

@@ -22,6 +22,7 @@ export const getStorageUse = async ({
   });
 
   const pro = limit?.pro === true;
+  const locked = limit?.locked === true;
   let storageLimit = resolveBaseStorageLimit({
     rowLimit: limit?.storageLimit ? Number(limit.storageLimit) : null,
     defaultLimit: getDefaultStorageLimit(),
@@ -49,5 +50,6 @@ export const getStorageUse = async ({
     unit: limit?.unit || "bytes",
     extraStorage,
     pro,
+    locked,
   };
 };

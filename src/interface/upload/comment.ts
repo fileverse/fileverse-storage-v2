@@ -1,6 +1,8 @@
 import { upload } from "../../domain";
 import { uploadPrivate } from "../../domain/upload";
 import { resolveWorkspaceStatus } from "../../domain/workspace";
+import { isPortalLocked } from "../../domain/limit/portalLocked";
+import { PORTAL_LOCKED_MESSAGE } from "../middleware/canUpload";
 import { throwForWorkspaceLookupError } from "../workspaceStatusErrors";
 import { validate, Joi } from "../middleware";
 import { throwError } from "../../infra/errorHandler";
@@ -63,6 +65,17 @@ async function uploadCommentFn(req: CustomRequest, res: Response) {
     }
   } else {
     isWorkspacePortal = req.headers.lane === "private";
+  }
+
+  if (
+    isWorkspacePortal &&
+    contractAddress &&
+    (await isPortalLocked(contractAddress))
+  ) {
+    res
+      .status(403)
+      .json({ code: "PORTAL_LOCKED", message: PORTAL_LOCKED_MESSAGE });
+    return;
   }
 
   const uploadFn = isWorkspacePortal ? uploadPrivate : upload;
