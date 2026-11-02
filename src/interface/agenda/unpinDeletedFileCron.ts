@@ -1,6 +1,7 @@
 import { agenda } from ".";
 import { logger } from "../../infra/logger";
 import unpinDeletedFileHashes from "./jobs/unpinDeletedFileHashes";
+import sweepUnclaimedSuggestions from "./jobs/sweepUnclaimedSuggestions";
 
 async function graceful() {
   await agenda.stop();
@@ -11,6 +12,7 @@ async function graceful() {
   try {
     await agenda.start();
     await unpinDeletedFileHashes.setupJob();
+    await sweepUnclaimedSuggestions.setupJob();
   } catch (err) {
     logger.error(err);
     await graceful();

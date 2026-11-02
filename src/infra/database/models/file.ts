@@ -48,6 +48,19 @@ const fileSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  // Only on SUGGESTION rows, which carry no contractAddress so no quota counts them.
+  suggestion: {
+    type: new Schema(
+      {
+        claimed: { type: Boolean, required: true },
+        portal: { type: String },
+        linkId: { type: String },
+        claimedAt: { type: Date },
+      },
+      { _id: false }
+    ),
+    default: undefined,
+  },
 });
 
 fileSchema.pre("save", function (next) {
@@ -67,6 +80,12 @@ fileSchema.index({
   timeStamp: -1,
   _id: -1,
 });
+
+// One live suggestion row per CID, even for uploads that land at once: unpinning any row deletes the shared pin.
+fileSchema.index(
+  { ipfsHash: 1, ipfsType: 1 },
+  { unique: true, partialFilterExpression: { ipfsType: FileIPFSType.SUGGESTION, isDeleted: false } }
+);
 
 const File = model("files", fileSchema);
 

@@ -10,6 +10,8 @@ import upload from "./upload";
 import uploadComment from "./comment";
 import uploadImage from "./image";
 import uploadPublic from "./publicUpload";
+import uploadSuggestion from "./suggestion";
+import { SUGGESTION_UPLOAD_MAX_BYTES } from "../../domain/suggestion";
 
 // middlewares
 import { canUpload } from "../middleware";
@@ -39,6 +41,17 @@ router.post(
   "/image",
   fileUpload({ limits: { fileSize: 10 * 1024 * 1024 }, abortOnLimit: true }),
   asyncHandlerArray(uploadImage)
+);
+
+// Folder suggestions: private lane, ciphertext only. The cap bounds unauthenticated
+// byte-pumping (no IP-based throttling, by policy).
+router.post(
+  "/suggestion",
+  fileUpload({
+    limits: { fileSize: SUGGESTION_UPLOAD_MAX_BYTES },
+    abortOnLimit: true,
+  }),
+  asyncHandlerArray(uploadSuggestion)
 );
 
 router.post(

@@ -37,6 +37,7 @@ export enum FileIPFSType {
   CONTENT = "CONTENT",
   METADATA = "METADATA",
   COMMENT = "COMMENT",
+  SUGGESTION = "SUGGESTION",
 }
 
 export enum SourceApp {
@@ -60,7 +61,24 @@ export interface IFile {
   ipfsType: FileIPFSType;
   isPinned: boolean;
   sourceApp: SourceApp;
+  suggestion?: ISuggestionState;
 }
+
+export interface ISuggestionState {
+  claimed: boolean;
+  portal?: string;
+  linkId?: string;
+  claimedAt?: Date;
+}
+
+export interface IUploadedSuggestion {
+  cid: string;
+  size: number;
+}
+
+export type SuggestionClaimResult =
+  | { ok: true; size: number }
+  | { ok: false; reason: "locked" | "not_found" | "claimed_elsewhere" };
 
 export interface ICreateCommunityFilesParams {
   publishedBy: string;

@@ -3,6 +3,7 @@ import { asyncHandlerArray } from "../../infra/asyncHandler";
 import { internalAuth } from "../middleware";
 import portalPlan from "./portalPlan";
 import portalStorage from "./portalStorage";
+import { claim, release } from "./suggestions";
 
 const router = Router();
 
@@ -13,5 +14,7 @@ router.get(
   "/portals/:contractAddress/storage",
   asyncHandlerArray(portalStorage)
 );
+router.post("/suggestions/claim", asyncHandlerArray(claim));
+router.post("/suggestions/release", asyncHandlerArray(release));
 
 export default router;
